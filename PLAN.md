@@ -198,7 +198,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/Dockerfile`, `frontend/Dockerfile`, `nginx/nginx.conf`, `docker-compose.yml`, `backend/entrypoint.sh`.
   - **Verification**: Verify Docker configuration syntax, nginx route proxying, and ensure zero simulator references exist.
 
-- [ ] **Milestone 33: Documentation & Production Runbooks**
+- [x] **Milestone 33: Documentation & Production Runbooks**
   - **Goal**: Write comprehensive documentation:
     - `docs/ARCHITECTURE.md` (System architecture, dependency flow, data models, decision pipeline).
     - `docs/OPERATIONS.md` (Runbooks for adapter outage, stale telemetry, command failures, emergency stop, scheduler failures, backup/restore).
