@@ -118,7 +118,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/decision_manager.py`, `backend/db/repositories/decision_repo.py`, `tests/backend/test_decision_manager.py`.
   - **Verification**: `pytest tests/backend/test_decision_manager.py` verifies cycle states (`started`, `completed`, `degraded`, `blocked`, `failed`), immutable persistence, and reason codes.
 
-- [ ] **Milestone 19: Decision Scheduler & Concurrency Lock**
+- [x] **Milestone 19: Decision Scheduler & Concurrency Lock**
   - **Goal**: Implement `DecisionScheduler` background worker with database/distributed lock to prevent overlapping cycles, handling fixed intervals from config, graceful shutdown, and health tracking.
   - **Files**: `backend/services/scheduler.py`, `tests/backend/test_scheduler.py`.
   - **Verification**: `pytest tests/backend/test_scheduler.py` proves lock prevents concurrent execution, scheduler catches errors gracefully, and records cycle status.
