@@ -98,7 +98,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/battery_scheduler.py`, `tests/backend/test_battery_scheduler.py`.
   - **Verification**: `pytest tests/backend/test_battery_scheduler.py` covers battery charge/discharge bounds, degradation prevention, and expected SoC projections.
 
-- [ ] **Milestone 15: Virtual Net Metering (VNM/GNM) Optimizer**
+- [x] **Milestone 15: Virtual Net Metering (VNM/GNM) Optimizer**
   - **Goal**: Implement `VNMOptimizer` supporting proportional and critical-first sharing ratios, ratio validation (summing to 1 or policy), allocated kWh and INR valuation, tariff tracking, and jurisdiction/rule version tagging.
   - **Files**: `backend/services/vnm_optimizer.py`, `tests/backend/test_vnm_optimizer.py`.
   - **Verification**: `pytest tests/backend/test_vnm_optimizer.py` tests ratio validation, proportional vs. critical-first allocations, tariff arithmetic, and rounding.
