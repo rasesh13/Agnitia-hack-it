@@ -10,6 +10,9 @@ import { Optimizer } from './pages/Optimizer';
 import { Renewables } from './pages/Renewables';
 import { Battery } from './pages/Battery';
 import { Grid } from './pages/Grid';
+import { Scheduler } from './pages/Scheduler';
+import { Alerts } from './pages/Alerts';
+import { Reports } from './pages/Reports';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
@@ -19,6 +22,7 @@ import {
   BatteryCharging,
   Globe,
   Activity,
+  Bell,
   FileSpreadsheet,
   Settings as SettingsIcon,
   LogOut,
@@ -48,7 +52,8 @@ const AuthenticatedApp: React.FC = () => {
     { id: 'renewables', label: 'Renewables', icon: Sun },
     { id: 'battery', label: 'Battery BESS', icon: BatteryCharging },
     { id: 'grid', label: 'Grid & Tariffs', icon: Globe },
-    { id: 'scheduler', label: 'Scheduler & Alerts', icon: Activity },
+    { id: 'scheduler', label: 'Scheduler', icon: Activity },
+    { id: 'alerts', label: 'Alerts', icon: Bell },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet },
     ...(isAdmin ? [{ id: 'settings', label: 'Settings', icon: SettingsIcon }] : []),
   ];
@@ -149,6 +154,12 @@ const AuthenticatedApp: React.FC = () => {
             <Battery />
           ) : activeTab === 'grid' ? (
             <Grid />
+          ) : activeTab === 'scheduler' ? (
+            <Scheduler />
+          ) : activeTab === 'alerts' ? (
+            <Alerts />
+          ) : activeTab === 'reports' ? (
+            <Reports />
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-sm">
               <h1 className="text-xl font-bold tracking-tight text-white capitalize">

@@ -225,6 +225,21 @@ export type CriticalityTier = 'critical' | 'essential' | 'non_critical';
 
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 
+export interface SystemAlert {
+  id: string;
+  severity: AlertSeverity;
+  title: string;
+  description: string;
+  source: string;
+  metric_name?: string;
+  current_value?: number;
+  threshold_value?: number;
+  created_at: string;
+  is_acknowledged: boolean;
+  acknowledged_at?: string | null;
+  acknowledged_by?: string | null;
+}
+
 export interface AlertThreshold {
   id: number;
   metric_name: string;

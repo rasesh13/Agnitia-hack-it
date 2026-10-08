@@ -175,7 +175,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/Renewables.tsx`, `frontend/src/pages/Battery.tsx`, `frontend/src/pages/Grid.tsx`, `frontend/src/components/BatteryGauge.tsx`.
   - **Verification**: Component tests verifying data display, offline telemetry states, and unit formatting.
 
-- [ ] **Milestone 29: Scheduler, Alerts, & Reports Pages**
+- [x] **Milestone 29: Scheduler, Alerts, & Reports Pages**
   - **Goal**: Build operational tooling pages:
     - Scheduler view: Cycle status, last/next run times, duration, failure logs, and manual "Force Cycle" trigger button.
     - Alerts view: Active vs History alerts, severity badges, acknowledge action, stale telemetry alerts.
