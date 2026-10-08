@@ -13,6 +13,7 @@ import { Grid } from './pages/Grid';
 import { Scheduler } from './pages/Scheduler';
 import { Alerts } from './pages/Alerts';
 import { Reports } from './pages/Reports';
+import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
@@ -160,16 +161,10 @@ const AuthenticatedApp: React.FC = () => {
             <Alerts />
           ) : activeTab === 'reports' ? (
             <Reports />
+          ) : activeTab === 'settings' ? (
+            <Settings />
           ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-sm">
-              <h1 className="text-xl font-bold tracking-tight text-white capitalize">
-                {activeTab.replace('_', ' ')} View
-              </h1>
-              <p className="mt-1 text-xs text-slate-400">
-                Live data pipeline connected. Active role:{' '}
-                <span className="font-semibold text-emerald-400 uppercase">{user?.role}</span>.
-              </p>
-            </div>
+            <Overview />
           )}
         </ProtectedRoute>
       </main>

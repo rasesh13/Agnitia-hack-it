@@ -183,7 +183,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/Scheduler.tsx`, `frontend/src/pages/Alerts.tsx`, `frontend/src/pages/Reports.tsx`, `frontend/src/components/AlertItem.tsx`.
   - **Verification**: Component tests for force-cycle triggering, alert acknowledgement, and report export requests.
 
-- [ ] **Milestone 30: System Settings & Control Policy View (Admin Only)**
+- [x] **Milestone 30: System Settings & Control Policy View (Admin Only)**
   - **Goal**: Build Settings page for administrators: Alert thresholds configuration, Building criticality tiers, VNM sharing ratios with validation, Asset limits, and Automated Control Policy toggle with Emergency Stop button.
   - **Files**: `frontend/src/pages/Settings.tsx`, `frontend/src/components/VNMConfigForm.tsx`, `frontend/src/components/EmergencyStopModal.tsx`.
   - **Verification**: Admin role protection tests, form validation tests, and emergency stop action tests.
