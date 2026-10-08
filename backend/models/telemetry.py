@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import (
     JSON,
     DateTime,
@@ -15,6 +16,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.models.base import Base, TimestampMixin, utc_now
+from backend.models.digital_twin import AssetType
 
 
 class TelemetryQuality(str, Enum):
@@ -25,6 +27,89 @@ class TelemetryQuality(str, Enum):
     STALE = "stale"
     MISSING = "missing"
     INVALID = "invalid"
+
+
+# ==============================================================================
+# Pydantic Canonical Schemas for Ingestion & Live Exchange
+# ==============================================================================
+
+
+class CanonicalMeasurement(BaseModel):
+    """
+    Standardized physical measurement representation conforming to spec Section 8.2.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    metric_name: str = Field(..., description="Canonical metric identifier")
+    value: Optional[float] = Field(None, description="Measured numerical value")
+    unit: str = Field(..., description="Standardized engineering unit")
+    quality: TelemetryQuality = Field(
+        TelemetryQuality.GOOD, description="Evaluated quality flag"
+    )
+    observed_at: datetime = Field(..., description="Source measurement timestamp")
+    received_at: datetime = Field(default_factory=utc_now, description="Server receipt timestamp")
+    source_adapter: str = Field("rest", description="Originating adapter identifier")
+    diagnostic_code: Optional[str] = Field(None, description="Diagnostic error or status code")
+
+
+class AssetTelemetrySnapshot(BaseModel):
+    """
+    Unified telemetry packet for a single physical energy asset.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    asset_id: str = Field(..., description="Unique asset identifier")
+    asset_type: AssetType = Field(..., description="Energy asset classification")
+    observed_at: Optional[datetime] = Field(None, description="Latest observation timestamp")
+    received_at: datetime = Field(default_factory=utc_now, description="Server receipt timestamp")
+    status: str = Field(
+        "offline", description="Operational status: online, degraded, stale, offline"
+    )
+    quality: TelemetryQuality = Field(TelemetryQuality.MISSING, description="Overall asset quality")
+    measurements: Dict[str, CanonicalMeasurement] = Field(
+        default_factory=dict, description="Map of metric_name to canonical measurement"
+    )
+
+
+class EnergySnapshot(BaseModel):
+    """
+    Immutable campus-wide energy telemetry snapshot captured across all assets.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    site_id: int = Field(..., description="Site identifier")
+    snapshot_id: str = Field(..., description="Unique UUID for this telemetry snapshot")
+    captured_at: datetime = Field(default_factory=utc_now, description="Server capture timestamp")
+    adapter_id: str = Field(..., description="Identifier of the adapter supplying snapshot")
+    assets: Dict[str, AssetTelemetrySnapshot] = Field(
+        default_factory=dict, description="Map of asset_id to AssetTelemetrySnapshot"
+    )
+
+
+class AdapterHealth(BaseModel):
+    """
+    Diagnostic health report for connected hardware adapters.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    adapter_id: str = Field(..., description="Adapter identifier")
+    adapter_type: str = Field(..., description="Protocol type: rest, modbus, mqtt")
+    is_healthy: bool = Field(..., description="True if adapter is responding normally")
+    latency_ms: float = Field(0.0, ge=0.0, description="Read round-trip latency in milliseconds")
+    last_successful_read: Optional[datetime] = Field(
+        None, description="Last successful read timestamp"
+    )
+    consecutive_failures: int = Field(0, ge=0, description="Count of sequential failed reads")
+    status_message: str = Field("Operational", description="Human-readable health summary")
+
+
+# ==============================================================================
+# SQLAlchemy Models for Persistence
+# ==============================================================================
 
 
 class TelemetryPoint(Base):
