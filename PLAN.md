@@ -88,7 +88,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/reliability_guard.py`, `tests/backend/test_reliability_guard.py`.
   - **Verification**: `pytest tests/backend/test_reliability_guard.py` proves hard reliability constraints override economic actions, reserve floors are never violated, and shedding order is deterministic.
 
-- [ ] **Milestone 13: Solar & Wind Forecast Engine**
+- [x] **Milestone 13: Solar & Wind Forecast Engine**
   - **Goal**: Implement `ForecastEngine` service for solar generation, wind power, and campus demand forecasting using measured history or external forecast inputs, with confidence scoring and fallback handling when data is degraded.
   - **Files**: `backend/services/forecast_engine.py`, `tests/backend/test_forecast_engine.py`.
   - **Verification**: `pytest tests/backend/test_forecast_engine.py` validates forecast generation, horizon calculations, and degraded confidence handling.
