@@ -38,7 +38,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/config.py`, `backend/models/schemas.py`, `backend/core/logging.py`, `tests/backend/test_config.py`.
   - **Verification**: `pytest tests/backend/test_config.py` passes for valid configurations and strictly rejects invalid weights, out-of-order thresholds, or weak secrets in production.
 
-- [ ] **Milestone 3: Database Engine & SQLAlchemy Base Setup**
+- [x] **Milestone 3: Database Engine & SQLAlchemy Base Setup**
   - **Goal**: Implement async SQLAlchemy engine, session management, declarative Base with UTC timestamp mixins, and Alembic migration infrastructure.
   - **Files**: `backend/db/database.py`, `backend/models/base.py`, `alembic.ini`, `backend/db/migrations/env.py`, `backend/db/migrations/script.py.mako`, `tests/backend/test_database.py`.
   - **Verification**: `pytest tests/backend/test_database.py` validates database connection and session creation against SQLite and PostgreSQL.
