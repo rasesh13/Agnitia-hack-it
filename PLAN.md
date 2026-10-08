@@ -108,7 +108,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/load_advisor.py`, `tests/backend/test_load_advisor.py`.
   - **Verification**: `pytest tests/backend/test_load_advisor.py` verifies non-flexible loads remain untouched, shift windows are calculated, and savings estimates are generated.
 
-- [ ] **Milestone 17: Cost & Carbon Optimization & Candidate Scoring**
+- [x] **Milestone 17: Cost & Carbon Optimization & Candidate Scoring**
   - **Goal**: Implement `CostOptimizer`, `CarbonOptimizer`, and candidate evaluation formula: $score(c) = w_{cost} \cdot normalized\_cost(c) + w_{carbon} \cdot normalized\_carbon(c)$ with deterministic tie-breakers (reliability margin, carbon, cost, candidate ID).
   - **Files**: `backend/services/cost_optimizer.py`, `backend/services/carbon_optimizer.py`, `backend/services/dispatch_optimizer.py`, `tests/backend/test_optimizer_scoring.py`.
   - **Verification**: `pytest tests/backend/test_optimizer_scoring.py` verifies cost/carbon normalization, candidate generation, constraint filtering, and deterministic ranking.
