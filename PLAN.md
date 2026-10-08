@@ -162,7 +162,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/DigitalTwin.tsx`, `frontend/src/components/BuildingCard.tsx`, `frontend/src/components/AssetDetailModal.tsx`.
   - **Verification**: Component tests checking rendering of building tiers, asset telemetry, and offline/stale status badges.
 
-- [ ] **Milestone 27: Optimizer & Decision Timeline View**
+- [x] **Milestone 27: Optimizer & Decision Timeline View**
   - **Goal**: Build Optimizer view: Decision timeline, filtering (by date, type, building, status), expandable decision cards showing plain-language reasoning, mathematical context, constraint checks, considered alternatives, and command execution status.
   - **Files**: `frontend/src/pages/Optimizer.tsx`, `frontend/src/components/DecisionCard.tsx`, `frontend/src/components/AlternativesModal.tsx`.
   - **Verification**: Component tests verifying decision detail expansion, filter actions, and alternative rejection reasons.

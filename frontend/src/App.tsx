@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Overview } from './pages/Overview';
 import { DigitalTwin } from './pages/DigitalTwin';
+import { Optimizer } from './pages/Optimizer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
@@ -132,6 +133,8 @@ const AuthenticatedApp: React.FC = () => {
             <Overview />
           ) : activeTab === 'twin' ? (
             <DigitalTwin />
+          ) : activeTab === 'optimizer' ? (
+            <Optimizer />
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-sm">
               <h1 className="text-xl font-bold tracking-tight text-white capitalize">
