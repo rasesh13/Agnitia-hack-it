@@ -152,7 +152,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/context/WebSocketContext.tsx`, `frontend/src/hooks/useLiveTwin.ts`, `frontend/src/components/StatusBadge.tsx`, `frontend/src/components/ConnectionBanner.tsx`.
   - **Verification**: Frontend tests simulating WS events, reconnection backoff, and disconnected staleness badges.
 
-- [ ] **Milestone 25: Overview / Mission Control Dashboard Page**
+- [x] **Milestone 25: Overview / Mission Control Dashboard Page**
   - **Goal**: Build Mission Control view: Campus power balance card, Renewable generation vs Demand, Battery SoC & flow, Grid import/export, Data freshness indicators, Active alerts ticker, and Latest decision summary card.
   - **Files**: `frontend/src/pages/Overview.tsx`, `frontend/src/components/PowerFlowDiagram.tsx`, `frontend/src/components/MetricCard.tsx`, `frontend/src/components/FreshnessIndicator.tsx`.
   - **Verification**: Component tests and typecheck for Overview page with live, stale, and offline states.
