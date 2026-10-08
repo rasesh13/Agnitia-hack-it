@@ -93,7 +93,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/forecast_engine.py`, `tests/backend/test_forecast_engine.py`.
   - **Verification**: `pytest tests/backend/test_forecast_engine.py` validates forecast generation, horizon calculations, and degraded confidence handling.
 
-- [ ] **Milestone 14: Battery Dispatch & Storage Scheduler**
+- [x] **Milestone 14: Battery Dispatch & Storage Scheduler**
   - **Goal**: Implement `BatteryScheduler` enforcing min/max SoC, charge/discharge power limits, battery health/temperature constraints, round-trip efficiency, and reserve floor calculations.
   - **Files**: `backend/services/battery_scheduler.py`, `tests/backend/test_battery_scheduler.py`.
   - **Verification**: `pytest tests/backend/test_battery_scheduler.py` covers battery charge/discharge bounds, degradation prevention, and expected SoC projections.
