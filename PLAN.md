@@ -188,7 +188,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/Settings.tsx`, `frontend/src/components/VNMConfigForm.tsx`, `frontend/src/components/EmergencyStopModal.tsx`.
   - **Verification**: Admin role protection tests, form validation tests, and emergency stop action tests.
 
-- [ ] **Milestone 31: End-to-End Integration & System Health Diagnostics**
+- [x] **Milestone 31: End-to-End Integration & System Health Diagnostics**
   - **Goal**: Implement end-to-end integration test flow covering adapter ingestion -> twin update -> decision cycle -> WebSocket broadcast -> API query -> export. Verify all system diagnostics endpoints.
   - **Files**: `tests/backend/test_e2e_pipeline.py`.
   - **Verification**: Full backend and frontend test suites pass (`pytest -q`, `npm --prefix frontend run test` or `build`).
