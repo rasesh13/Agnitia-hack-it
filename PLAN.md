@@ -28,7 +28,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
 
 ## Detailed Milestones
 
-- [ ] **Milestone 1: Project Scaffolding, Tooling, & Configuration**
+- [x] **Milestone 1: Project Scaffolding, Tooling, & Configuration**
   - **Goal**: Set up repository layout, backend packaging (`pyproject.toml`/`requirements.txt`), frontend Vite React TS project skeleton, linting/formatting configs (`ruff`, `eslint`, `tsconfig`), `.gitignore`, and `.env.example`.
   - **Files**: `.gitignore`, `pyproject.toml`, `requirements.txt`, `.env.example`, `frontend/package.json`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `frontend/index.html`.
   - **Verification**: `ruff check backend/` runs cleanly; `npm --prefix frontend install` and `npm --prefix frontend run build` complete without errors.
