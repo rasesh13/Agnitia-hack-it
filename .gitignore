@@ -67,3 +67,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Design Scratch Assets
+Gemini_Generated_Image_*.png
