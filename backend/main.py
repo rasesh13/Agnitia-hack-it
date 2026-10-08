@@ -10,6 +10,7 @@ from backend.api.middleware import (
 from backend.api.routes_auth import router as auth_router
 from backend.api.routes_control import router as control_router
 from backend.api.routes_decisions import router as decisions_router
+from backend.api.routes_export import router as export_router
 from backend.api.routes_health import router as health_router
 from backend.api.routes_settings import router as settings_router
 from backend.api.routes_twin import router as twin_router
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(decisions_router)
     app.include_router(settings_router)
     app.include_router(control_router)
+    app.include_router(export_router)
     app.include_router(ws_router)
 
     return app

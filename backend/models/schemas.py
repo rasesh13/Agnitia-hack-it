@@ -402,3 +402,38 @@ class EmergencyStopResponse(BaseModel):
     message: str
     timestamp: datetime
 
+
+# ==============================================================================
+# Export & Reporting Schemas
+# ==============================================================================
+
+
+class ExportStatsResponse(BaseModel):
+    """Comprehensive executive export statistics conforming to spec Section 11."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    site_id: int
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    timezone: str = "Asia/Kolkata"
+    currency: str = "INR"
+    units: dict[str, str] = Field(
+        default_factory=lambda: {
+            "power": "kW",
+            "energy": "kWh",
+            "cost": "INR",
+            "carbon": "kg CO2e",
+        }
+    )
+    tariffs: dict[str, float] = Field(
+        default_factory=lambda: {
+            "grid_import_inr_per_kwh": 8.50,
+            "grid_export_inr_per_kwh": 3.50,
+            "carbon_emission_factor_kg_per_kwh": 0.82,
+        }
+    )
+    metrics: dict[str, Any]
+    data_quality_disclosure: dict[str, Any]
+
+

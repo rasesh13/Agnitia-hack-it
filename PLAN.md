@@ -137,7 +137,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/api/routes_decisions.py`, `backend/api/routes_settings.py`, `backend/api/routes_control.py`, `backend/api/routes_health.py`, `backend/main.py`, `tests/backend/test_routes_api.py`.
   - **Verification**: `pytest tests/backend/test_routes_api.py` tests all endpoints, role checks, validation, rate limiting, and emergency stop behavior.
 
-- [ ] **Milestone 22: Reporting & CSV/PDF Export Service**
+- [x] **Milestone 22: Reporting & CSV/PDF Export Service**
   - **Goal**: Implement `/api/v1/export/csv`, `/api/v1/export/pdf`, and `/api/v1/export/stats` with period, timezone, units, currency, tariffs, carbon factor, and data-quality disclosures.
   - **Files**: `backend/api/routes_export.py`, `backend/services/export_service.py`, `tests/backend/test_export.py`.
   - **Verification**: `pytest tests/backend/test_export.py` verifies CSV structure, PDF rendering, headers, filters, and quality disclosures.
