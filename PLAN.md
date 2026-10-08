@@ -63,7 +63,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/models/telemetry.py`, `backend/models/decision_log.py`, `backend/db/migrations/versions/002_telemetry_decisions.py`, `tests/backend/test_telemetry_models.py`.
   - **Verification**: `pytest tests/backend/test_telemetry_models.py` verifies persistence and querying of telemetry points, digital twin states, and append-only decision audit records.
 
-- [ ] **Milestone 8: Telemetry Data Normalization & Quality Assessment Engine**
+- [x] **Milestone 8: Telemetry Data Normalization & Quality Assessment Engine**
   - **Goal**: Implement canonical telemetry data schemas, unit conversions (kW, kWh, %, °C, m/s), quality classification (`good`, `suspect`, `stale`, `missing`, `invalid`), and staleness detection against `TELEMETRY_STALE_AFTER_SECONDS` and `TELEMETRY_FAILURE_AFTER_SECONDS`.
   - **Files**: `backend/models/telemetry.py`, `backend/services/telemetry_quality.py`, `tests/backend/test_telemetry_quality.py`.
   - **Verification**: `pytest tests/backend/test_telemetry_quality.py` validates quality tagging for missing, stale, out-of-range, and invalid readings.
