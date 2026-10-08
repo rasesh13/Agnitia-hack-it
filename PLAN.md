@@ -78,7 +78,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/digital_twin_store.py`, `backend/db/repositories/twin_repo.py`, `tests/backend/test_digital_twin_store.py`.
   - **Verification**: `pytest tests/backend/test_digital_twin_store.py` tests twin state upsert, aggregate metrics, and data quality preservation.
 
-- [ ] **Milestone 11: Digital Twin & Telemetry API Endpoints**
+- [x] **Milestone 11: Digital Twin & Telemetry API Endpoints**
   - **Goal**: Implement REST endpoints: `/api/v1/twin/site`, `/api/v1/twin/buildings`, `/api/v1/twin/assets`, `/api/v1/twin/live`, `/api/v1/telemetry/series` returning freshness metadata (`observed_at`, `received_at`, `quality`, `status`, `age_seconds`).
   - **Files**: `backend/api/routes_twin.py`, `tests/backend/test_routes_twin.py`.
   - **Verification**: `pytest tests/backend/test_routes_twin.py` validates JSON schema compliance, query filtering, and freshness headers/fields.
