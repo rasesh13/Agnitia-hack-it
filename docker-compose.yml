@@ -1,0 +1,75 @@
+services:
+  # ==============================================================================
+  # Primary Relational Store: PostgreSQL 16
+  # ==============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: surya_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-surya_db}
+      POSTGRES_USER: ${POSTGRES_USER:-surya_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-surya_secret_password}
+    volumes:
+      - surya_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-surya_user} -d ${POSTGRES_DB:-surya_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - surya_net
+
+  # ==============================================================================
+  # Core Operations Backend: FastAPI, SQLAlchemy 2.0 Async ORM, Optimizer Engine
+  # ==============================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: surya_backend
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-surya_user}:${POSTGRES_PASSWORD:-surya_secret_password}@postgres:5432/${POSTGRES_DB:-surya_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-production_surya_jwt_secret_key_987654321_secure}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      DEFAULT_SITE_ID: 1
+      DECISION_CYCLE_SECONDS: 60
+      CLOSED_LOOP_ENABLED: "false"
+      CORS_ORIGINS: '["http://localhost", "http://localhost:80", "http://localhost:3000", "http://localhost:5173"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    networks:
+      - surya_net
+
+  # ==============================================================================
+  # Operations Dashboard: React 18 TypeScript SPA + Nginx Reverse Proxy
+  # ==============================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: surya_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - surya_net
+
+volumes:
+  surya_pgdata:
+    name: surya_pgdata
+
+networks:
+  surya_net:
+    name: surya_net
+    driver: bridge

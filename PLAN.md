@@ -193,7 +193,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `tests/backend/test_e2e_pipeline.py`.
   - **Verification**: Full backend and frontend test suites pass (`pytest -q`, `npm --prefix frontend run test` or `build`).
 
-- [ ] **Milestone 32: Docker, Reverse Proxy, & Deployment Configuration**
+- [x] **Milestone 32: Docker, Reverse Proxy, & Deployment Configuration**
   - **Goal**: Create Dockerfile for backend, multi-stage Dockerfile for frontend, nginx reverse proxy configuration (serving SPA history fallback, proxying `/api` and `/ws`), `docker-compose.yml` (backend, frontend, postgres), and startup entrypoint running `alembic upgrade head`.
   - **Files**: `backend/Dockerfile`, `frontend/Dockerfile`, `nginx/nginx.conf`, `docker-compose.yml`, `backend/entrypoint.sh`.
   - **Verification**: Verify Docker configuration syntax, nginx route proxying, and ensure zero simulator references exist.
