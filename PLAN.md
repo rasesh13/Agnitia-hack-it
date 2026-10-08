@@ -68,7 +68,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/models/telemetry.py`, `backend/services/telemetry_quality.py`, `tests/backend/test_telemetry_quality.py`.
   - **Verification**: `pytest tests/backend/test_telemetry_quality.py` validates quality tagging for missing, stale, out-of-range, and invalid readings.
 
-- [ ] **Milestone 9: Adapter Interface & Vendor-Neutral Protocol Adapters**
+- [x] **Milestone 9: Adapter Interface & Vendor-Neutral Protocol Adapters**
   - **Goal**: Define abstract `EnergyAdapter` (`read_snapshot`, `write_command`, `health`, `start`, `stop`) and concrete production adapters (REST, Modbus TCP/RTU, MQTT) with site configuration mapping, plus an in-memory test stub used exclusively in test scope.
   - **Files**: `backend/adapters/base.py`, `backend/adapters/rest.py`, `backend/adapters/modbus.py`, `backend/adapters/mqtt.py`, `backend/adapters/site_config.py`, `tests/backend/test_adapters.py`.
   - **Verification**: `pytest tests/backend/test_adapters.py` validates interface contracts, connection handling, snapshot normalization, and command execution.
