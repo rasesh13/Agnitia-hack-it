@@ -79,12 +79,18 @@ class DecisionCycle(Base):
     health_summary: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
     reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    # Relationships
+    # Relationships with selectin loading for async compatibility
     decisions: Mapped[List["DecisionLog"]] = relationship(
-        "DecisionLog", back_populates="cycle", cascade="all, delete-orphan"
+        "DecisionLog",
+        back_populates="cycle",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
     alternatives: Mapped[List["DecisionAlternative"]] = relationship(
-        "DecisionAlternative", back_populates="cycle", cascade="all, delete-orphan"
+        "DecisionAlternative",
+        back_populates="cycle",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
@@ -103,7 +109,10 @@ class DecisionLog(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     cycle_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("decision_cycles.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("decision_cycles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     site_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("sites.id", ondelete="CASCADE"), nullable=False
@@ -133,7 +142,7 @@ class DecisionLog(Base):
     # Relationships
     cycle: Mapped["DecisionCycle"] = relationship("DecisionCycle", back_populates="decisions")
     commands: Mapped[List["ControlCommand"]] = relationship(
-        "ControlCommand", back_populates="decision"
+        "ControlCommand", back_populates="decision", lazy="selectin"
     )
 
     def __repr__(self) -> str:
@@ -152,7 +161,10 @@ class DecisionAlternative(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     cycle_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("decision_cycles.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("decision_cycles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     candidate_id: Mapped[str] = mapped_column(String(64), nullable=False)
     strategy_description: Mapped[str] = mapped_column(String(255), nullable=False)
