@@ -113,7 +113,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/cost_optimizer.py`, `backend/services/carbon_optimizer.py`, `backend/services/dispatch_optimizer.py`, `tests/backend/test_optimizer_scoring.py`.
   - **Verification**: `pytest tests/backend/test_optimizer_scoring.py` verifies cost/carbon normalization, candidate generation, constraint filtering, and deterministic ranking.
 
-- [ ] **Milestone 18: Decision Manager & Immutable Audit Persistence**
+- [x] **Milestone 18: Decision Manager & Immutable Audit Persistence**
   - **Goal**: Implement `DecisionManager` orchestrating full cycle sequence (read snapshot -> twin update -> forecast -> reliability guard -> candidate dispatch -> battery/VNM/load shift -> score -> persist decision & alternatives -> control commands if enabled).
   - **Files**: `backend/services/decision_manager.py`, `backend/db/repositories/decision_repo.py`, `tests/backend/test_decision_manager.py`.
   - **Verification**: `pytest tests/backend/test_decision_manager.py` verifies cycle states (`started`, `completed`, `degraded`, `blocked`, `failed`), immutable persistence, and reason codes.
