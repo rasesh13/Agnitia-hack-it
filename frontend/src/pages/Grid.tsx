@@ -40,9 +40,9 @@ export const Grid: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Grid Interconnection & Tariffs</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Grid Interconnection & MPPKVVCL Tariffs</h1>
           <p className="mt-1 text-xs text-slate-400">
-            Real-time point-of-common-coupling (PCC) power flow, Time-of-Day (TOD) tariffs, and carbon tracking
+            Prestige University, Indore • MPPKVVCL 11kV Grid Interconnection, Time-of-Day (TOD) tariffs & MP carbon accounting
           </p>
         </div>
 

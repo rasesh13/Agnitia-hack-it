@@ -14,6 +14,7 @@ import { Scheduler } from './pages/Scheduler';
 import { Alerts } from './pages/Alerts';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import { Forecast } from './pages/Forecast';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
@@ -28,11 +29,13 @@ import {
   Settings as SettingsIcon,
   LogOut,
   User,
+  LineChart,
 } from 'lucide-react';
 
 export type NavTab =
   | 'overview'
   | 'twin'
+  | 'forecast'
   | 'optimizer'
   | 'renewables'
   | 'battery'
@@ -48,6 +51,7 @@ const AuthenticatedApp: React.FC = () => {
 
   const navItems = [
     { id: 'overview', label: 'Mission Control', icon: LayoutDashboard },
+    { id: 'forecast', label: 'ML Forecasting', icon: LineChart },
     { id: 'twin', label: 'Digital Twin', icon: Cpu },
     { id: 'optimizer', label: 'Optimizer', icon: Zap },
     { id: 'renewables', label: 'Renewables', icon: Sun },
@@ -83,7 +87,7 @@ const AuthenticatedApp: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="hidden items-center gap-2 text-xs text-slate-400 sm:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>Campus Site 1 • Asia/Kolkata</span>
+              <span className="font-medium text-slate-300">Prestige University, Indore • MP Microgrid</span>
             </div>
 
             <div className="flex items-center gap-2.5 rounded-full border border-slate-800 bg-slate-800/60 px-3.5 py-1.5 text-xs text-slate-200">
@@ -145,6 +149,8 @@ const AuthenticatedApp: React.FC = () => {
         <ProtectedRoute requiredRole={activeTab === 'settings' ? 'admin' : 'viewer'}>
           {activeTab === 'overview' ? (
             <Overview />
+          ) : activeTab === 'forecast' ? (
+            <Forecast />
           ) : activeTab === 'twin' ? (
             <DigitalTwin />
           ) : activeTab === 'optimizer' ? (

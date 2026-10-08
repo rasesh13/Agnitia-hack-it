@@ -36,7 +36,7 @@ export const Battery: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Battery Energy Storage (BESS)</h1>
           <p className="mt-1 text-xs text-slate-400">
-            Real-time telemetry, state-of-charge tracking, C-rate limits, and degradation protection
+            Prestige University, Indore • 500 kWh / 250 kW Campus BESS storage, SoC reserve floor, and automated peak dispatch
           </p>
         </div>
 

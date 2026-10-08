@@ -174,6 +174,14 @@ class ForecastEngine:
         confidences: List[float] = []
         has_degraded = False
 
+        ml_forecast = None
+        try:
+            from backend.services.agnitia_ml_forecaster import ml_forecaster
+            if ml_forecaster.is_ready():
+                ml_forecast = ml_forecaster.forecast_48h(region_id="central_india_mp_indore", start_dt=now_dt)
+        except Exception:
+            ml_forecast = None
+
         for i in range(1, num_intervals + 1):
             t_start = now_dt + timedelta(minutes=(i - 1) * interval_minutes)
             t_end = now_dt + timedelta(minutes=i * interval_minutes)
@@ -203,6 +211,35 @@ class ForecastEngine:
                 is_solar=False,
             )
 
+            source_method = "history_weighted_moving_average"
+            if ml_forecast and "solar" in ml_forecast.series:
+                source_method = "lightgbm_quantile_ml_hybrid"
+                hr_idx = min(int((t_mid - now_dt).total_seconds() / 3600), len(ml_forecast.series["solar"]) - 1)
+                ml_solar = ml_forecast.series["solar"][hr_idx].p50_prediction
+                ml_wind = ml_forecast.series["wind"][hr_idx].p50_prediction
+                ml_demand = ml_forecast.series["demand"][hr_idx].p50_prediction
+
+                if solar_history:
+                    solar_kw = round(0.3 * solar_kw + 0.7 * ml_solar, 2)
+                else:
+                    solar_kw = round(ml_solar, 2)
+                    s_conf = 0.95
+                    s_deg = False
+
+                if wind_history:
+                    wind_kw = round(0.3 * wind_kw + 0.7 * ml_wind, 2)
+                else:
+                    wind_kw = round(ml_wind, 2)
+                    w_conf = 0.92
+                    w_deg = False
+
+                if demand_history:
+                    demand_kw = round(0.3 * demand_kw + 0.7 * ml_demand, 2)
+                else:
+                    demand_kw = round(ml_demand, 2)
+                    d_conf = 0.91
+                    d_deg = False
+
             tot_gen = round(solar_kw + wind_kw, 2)
             net_surplus = round(tot_gen - demand_kw, 2)
             interval_conf = round((s_conf + w_conf + d_conf) / 3.0, 2)
@@ -223,7 +260,7 @@ class ForecastEngine:
                     net_surplus_kw=net_surplus,
                     confidence=interval_conf,
                     is_degraded=interval_deg,
-                    source_method="history_weighted_moving_average",
+                    source_method=source_method,
                 )
             )
 

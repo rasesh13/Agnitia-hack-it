@@ -136,7 +136,125 @@ export const apiAuth = {
 
 export const apiTwin = {
   getSiteTwin: async (siteId: number = 1): Promise<SiteRead> => {
-    return request<SiteRead>(`/api/v1/twin/site?site_id=${siteId}`);
+    const live = await request<{
+      site: {
+        id: number;
+        name: string;
+        timezone: string;
+        jurisdiction: string;
+        currency: string;
+        config_version: number;
+        total_assets: number;
+      };
+      aggregate: {
+        total_solar_kw: number;
+        total_wind_kw: number;
+        total_generation_kw: number;
+        total_building_demand_kw: number;
+        total_battery_charge_kw: number;
+        total_battery_discharge_kw: number;
+        net_battery_kw: number;
+        grid_import_kw: number;
+        grid_export_kw: number;
+        net_grid_flow_kw: number;
+        average_battery_soc_percent: number | null;
+        overall_quality: string;
+      };
+      assets: Array<{
+        asset_id: string;
+        name: string;
+        asset_type: string;
+        site_id: number;
+        rated_capacity_kw: number | null;
+        operational_status: string;
+        telemetry_quality: string;
+        active_power_kw: number | null;
+        energy_kwh: number | null;
+        soc_percent: number | null;
+        health_percent: number | null;
+        temperature_celsius: number | null;
+        wind_speed_ms: number | null;
+        voltage_v: number | null;
+        frequency_hz: number | null;
+        observed_at: string | null;
+        received_at: string;
+      }>;
+    }>(`/api/v1/twin/live?site_id=${siteId}`);
+
+    return {
+      id: live.site.id,
+      name: live.site.name,
+      timezone: live.site.timezone,
+      jurisdiction: live.site.jurisdiction,
+      currency: live.site.currency,
+      config_version: live.site.config_version,
+      total_assets: live.site.total_assets,
+      assets: (live.assets || []).map((a) => {
+        const isBldg = a.asset_type === 'building';
+        return {
+          id: a.asset_id,
+          name: a.name,
+          asset_type: a.asset_type as any,
+          site_id: a.site_id,
+          rated_capacity_kw: a.rated_capacity_kw || 0,
+          is_active: a.operational_status === 'online',
+          building_config: isBldg
+            ? {
+                id: 1,
+                asset_id: a.asset_id,
+                building_name: a.name,
+                criticality_tier: a.asset_id.includes('admin')
+                  ? 'critical'
+                  : a.asset_id.includes('eng')
+                  ? 'essential'
+                  : 'non_critical',
+                peak_load_kw: a.rated_capacity_kw || 100,
+                flexible_load_policy: a.asset_id.includes('hostel') ? 'shiftable' : 'protected',
+                updated_at: new Date().toISOString(),
+              }
+            : null,
+          battery_config:
+            a.asset_type === 'battery'
+              ? {
+                  id: 1,
+                  asset_id: a.asset_id,
+                  min_soc: 15.0,
+                  max_soc: 95.0,
+                  reserve_floor: 20.0,
+                  max_charge_power_kw: 125.0,
+                  max_discharge_power_kw: 125.0,
+                  round_trip_efficiency: 0.92,
+                  health_floor: 75.0,
+                  updated_at: new Date().toISOString(),
+                }
+              : null,
+          state: {
+            asset_id: a.asset_id,
+            operational_status: a.operational_status,
+            active_power_kw: a.active_power_kw ?? 0,
+            soc_percent: a.soc_percent,
+            health_percent: a.health_percent,
+            temperature_celsius: a.temperature_celsius,
+            wind_speed_ms: a.wind_speed_ms,
+            voltage_v: a.voltage_v,
+            frequency_hz: a.frequency_hz,
+            telemetry_quality: a.telemetry_quality as any,
+            observed_at: a.observed_at || new Date().toISOString(),
+            received_at: a.received_at,
+          },
+        };
+      }),
+      aggregates: {
+        total_solar_generation_kw: live.aggregate.total_solar_kw,
+        total_wind_generation_kw: live.aggregate.total_wind_kw,
+        total_renewable_generation_kw: live.aggregate.total_generation_kw,
+        total_campus_demand_kw: live.aggregate.total_building_demand_kw,
+        total_battery_power_kw: live.aggregate.net_battery_kw,
+        net_grid_exchange_kw: live.aggregate.net_grid_flow_kw,
+        average_battery_soc_percent: live.aggregate.average_battery_soc_percent ?? 50,
+        data_freshness_status: live.aggregate.overall_quality,
+      },
+    };
   },
 
   getAssetTelemetry: async (

@@ -119,6 +119,28 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onSuccess }) => 
               <span>Sign In to Mission Control</span>
             )}
           </button>
+
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={async () => {
+              setEmail('admin@prestige.edu.in');
+              setPassword('SuryaAdmin2026!');
+              clearError();
+              setIsSubmitting(true);
+              try {
+                await login('admin@prestige.edu.in', 'SuryaAdmin2026!');
+                if (onSuccess) onSuccess();
+              } catch {
+                // handled in context
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20"
+          >
+            ⚡ 1-Click Demo Login (Prestige University Admin)
+          </button>
         </form>
 
         {/* Footer info */}

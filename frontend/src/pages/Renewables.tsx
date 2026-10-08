@@ -34,7 +34,7 @@ export const Renewables: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Renewable Generation Fleet</h1>
           <p className="mt-1 text-xs text-slate-400">
-            Real-time photovoltaic and wind turbine telemetry, inverter performance, and capacity utilization
+            Prestige University, Indore • Real-time photovoltaic (300 kW) and wind turbine (120 kW) telemetry & capacity utilization
           </p>
         </div>
 

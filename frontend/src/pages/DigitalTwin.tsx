@@ -73,7 +73,7 @@ export const DigitalTwin: React.FC = () => {
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            {site?.name || 'SURYA Campus'} • {site?.jurisdiction || 'India'} ({site?.timezone || 'Asia/Kolkata'})
+            {site?.name || 'Prestige University, Indore (Malwa Microgrid)'} • Madhya Pradesh, India (Asia/Kolkata)
           </p>
         </div>
 
