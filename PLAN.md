@@ -123,7 +123,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/scheduler.py`, `tests/backend/test_scheduler.py`.
   - **Verification**: `pytest tests/backend/test_scheduler.py` proves lock prevents concurrent execution, scheduler catches errors gracefully, and records cycle status.
 
-- [ ] **Milestone 20: Authenticated WebSocket Manager & Versioned Envelope**
+- [x] **Milestone 20: Authenticated WebSocket Manager & Versioned Envelope**
   - **Goal**: Implement `WebSocketManager` with JWT auth, connection tracking, dead client cleanup, versioned envelope broadcasting (`twin_update`, `full_cycle`, `alert`, `health`, `error`), and non-blocking event dispatch.
   - **Files**: `backend/ws/websocket_manager.py`, `tests/backend/test_websocket_manager.py`.
   - **Verification**: `pytest tests/backend/test_websocket_manager.py` verifies authentication, envelope format, client broadcast, disconnect handling, and isolation from scheduler loop.
