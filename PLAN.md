@@ -48,7 +48,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/models/user.py`, `backend/models/schemas.py`, `backend/services/auth_crypto.py`, `tests/backend/test_auth_crypto.py`.
   - **Verification**: `pytest tests/backend/test_auth_crypto.py` tests Argon2id hashing/verification, JWT token creation, decoding, expiration, and claims (`user_id`, `role`, `token_version`).
 
-- [ ] **Milestone 5: Auth & Role Middleware, Rate Limiter, & Auth API Routes**
+- [x] **Milestone 5: Auth & Role Middleware, Rate Limiter, & Auth API Routes**
   - **Goal**: Implement rate limiting middleware (signup/login/google per IP), user repository, and FastAPI routers for signup, login, Google sign-in (verifying client ID and audience), and `/api/v1/auth/me`.
   - **Files**: `backend/api/rate_limit.py`, `backend/api/middleware.py`, `backend/api/routes_auth.py`, `backend/db/repositories/user_repo.py`, `backend/api/deps.py`, `tests/backend/test_routes_auth.py`.
   - **Verification**: `pytest tests/backend/test_routes_auth.py` covers signup, login, token issuance, protected `/me` endpoint, role authorization, and rate limiting.
