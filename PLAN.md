@@ -53,7 +53,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/api/rate_limit.py`, `backend/api/middleware.py`, `backend/api/routes_auth.py`, `backend/db/repositories/user_repo.py`, `backend/api/deps.py`, `tests/backend/test_routes_auth.py`.
   - **Verification**: `pytest tests/backend/test_routes_auth.py` covers signup, login, token issuance, protected `/me` endpoint, role authorization, and rate limiting.
 
-- [ ] **Milestone 6: Site, Asset, Building, and Battery Data Models & Initial Migration**
+- [x] **Milestone 6: Site, Asset, Building, and Battery Data Models & Initial Migration**
   - **Goal**: Define SQLAlchemy models for `Site`, `Asset`, `BuildingConfig`, `BatteryConfig`, `AlertThreshold`, `VNMSharingRule`, and `AuditEvent`. Create and verify initial Alembic migration.
   - **Files**: `backend/models/digital_twin.py`, `backend/models/config.py`, `backend/db/migrations/versions/001_initial_schema.py`, `tests/backend/test_models.py`.
   - **Verification**: Run migration upgrade and downgrade in tests; verify table structures, foreign keys, and constraints.
