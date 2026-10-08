@@ -157,7 +157,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/Overview.tsx`, `frontend/src/components/PowerFlowDiagram.tsx`, `frontend/src/components/MetricCard.tsx`, `frontend/src/components/FreshnessIndicator.tsx`.
   - **Verification**: Component tests and typecheck for Overview page with live, stale, and offline states.
 
-- [ ] **Milestone 26: Digital Twin & Assets Management View**
+- [x] **Milestone 26: Digital Twin & Assets Management View**
   - **Goal**: Build Digital Twin view: Site hierarchy, Buildings list with criticality badges, Asset details (Solar, Wind, Battery, Loads, Meters), Live measurements, Quality flags, and capacity limits.
   - **Files**: `frontend/src/pages/DigitalTwin.tsx`, `frontend/src/components/BuildingCard.tsx`, `frontend/src/components/AssetDetailModal.tsx`.
   - **Verification**: Component tests checking rendering of building tiers, asset telemetry, and offline/stale status badges.

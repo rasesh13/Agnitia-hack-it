@@ -5,6 +5,7 @@ import { ConnectionBanner } from './components/ConnectionBanner';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Overview } from './pages/Overview';
+import { DigitalTwin } from './pages/DigitalTwin';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
@@ -129,6 +130,8 @@ const AuthenticatedApp: React.FC = () => {
         <ProtectedRoute requiredRole={activeTab === 'settings' ? 'admin' : 'viewer'}>
           {activeTab === 'overview' ? (
             <Overview />
+          ) : activeTab === 'twin' ? (
+            <DigitalTwin />
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-sm">
               <h1 className="text-xl font-bold tracking-tight text-white capitalize">
