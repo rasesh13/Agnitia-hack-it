@@ -73,7 +73,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/adapters/base.py`, `backend/adapters/rest.py`, `backend/adapters/modbus.py`, `backend/adapters/mqtt.py`, `backend/adapters/site_config.py`, `tests/backend/test_adapters.py`.
   - **Verification**: `pytest tests/backend/test_adapters.py` validates interface contracts, connection handling, snapshot normalization, and command execution.
 
-- [ ] **Milestone 10: Digital Twin Store & Aggregation Service**
+- [x] **Milestone 10: Digital Twin Store & Aggregation Service**
   - **Goal**: Implement `DigitalTwinStore` service and repository for updating asset states from telemetry snapshots, computing campus aggregates (generation, demand, battery power, grid flow, counts of online/stale/offline assets), and storing interval telemetry without zero-filling missing measurements.
   - **Files**: `backend/services/digital_twin_store.py`, `backend/db/repositories/twin_repo.py`, `tests/backend/test_digital_twin_store.py`.
   - **Verification**: `pytest tests/backend/test_digital_twin_store.py` tests twin state upsert, aggregate metrics, and data quality preservation.
