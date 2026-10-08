@@ -3,7 +3,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 from backend.services.agnitia_ml_forecaster import ForecastResponse, RegionInfo, ml_forecaster
-from training.step5_test_and_train_custom_region import train_and_evaluate_region
 
 router = APIRouter(prefix="/api/v1/forecast", tags=["forecasting"])
 
@@ -56,6 +55,7 @@ async def train_new_region(payload: TrainRegionRequest):
     and multi-model training for any new region or coordinates.
     """
     try:
+        from training.step5_test_and_train_custom_region import train_and_evaluate_region
         report = train_and_evaluate_region(
             region_id=payload.region_id,
             name=payload.name,

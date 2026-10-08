@@ -44,7 +44,6 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
     existing_user = (await session.execute(stmt)).scalar_one_or_none()
     if not existing_user:
         admin_user = User(
-            id=1,
             email="operator@surya.local",
             password_hash=hash_password("SuryaAdmin2026!"),
             role=UserRole.ADMIN,
@@ -58,7 +57,6 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
     existing_edu = (await session.execute(stmt_edu)).scalar_one_or_none()
     if not existing_edu:
         edu_user = User(
-            id=2,
             email="admin@prestige.edu.in",
             password_hash=hash_password("SuryaAdmin2026!"),
             role=UserRole.ADMIN,

@@ -24,13 +24,22 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import xgboost as xgb
 
-WEATHER_DIR = Path(r"D:\codes\datasets for agnitia hack it\regional_weather")
-MODEL_OUT_DIR = Path(r"D:\codes\model files for agnitia hack it\regional")
+try:
+    WEATHER_DIR = Path(r"D:\codes\datasets for agnitia hack it\regional_weather")
+    MODEL_OUT_DIR = Path(r"D:\codes\model files for agnitia hack it\regional")
+    WEATHER_DIR.mkdir(parents=True, exist_ok=True)
+    MODEL_OUT_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    WEATHER_DIR = Path("datasets/regional_weather")
+    MODEL_OUT_DIR = Path("model_files/regional")
+    try:
+        WEATHER_DIR.mkdir(parents=True, exist_ok=True)
+        MODEL_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
 PROFILES_FILE = WEATHER_DIR / "regional_profiles.json"
 REGIONAL_METRICS_FILE = MODEL_OUT_DIR / "regional_evaluation_metrics.json"
-
-WEATHER_DIR.mkdir(parents=True, exist_ok=True)
-MODEL_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def fetch_or_load_regional_weather(

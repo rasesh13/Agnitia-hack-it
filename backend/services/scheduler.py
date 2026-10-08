@@ -139,11 +139,31 @@ class DecisionScheduler:
                         if self.broadcast_callback:
                             try:
                                 payload = {
+                                    "id": result.cycle_id,
                                     "cycle_id": result.cycle_id,
+                                    "site_id": result.site_id,
                                     "status": result.status.value,
                                     "duration_ms": result.duration_ms,
+                                    "cycle_started_at": utc_now().isoformat(),
                                     "decisions_count": len(result.decisions),
                                     "commands_count": len(result.commands),
+                                    "decisions": [
+                                        {
+                                            "id": d.id,
+                                            "cycle_id": d.cycle_id,
+                                            "site_id": d.site_id,
+                                            "target_asset_id": d.target_asset_id,
+                                            "decision_type": d.decision_type.value if hasattr(d.decision_type, "value") else str(d.decision_type),
+                                            "action": d.action,
+                                            "reason": d.reason,
+                                            "confidence": d.confidence,
+                                            "expected_savings_inr": d.expected_savings_inr,
+                                            "carbon_impact_kg": d.carbon_impact_kg,
+                                            "created_at": d.created_at.isoformat() if hasattr(d, "created_at") and d.created_at else utc_now().isoformat(),
+                                            "commands": [],
+                                        }
+                                        for d in result.decisions
+                                    ],
                                 }
                                 res = self.broadcast_callback("full_cycle", payload)
                                 if asyncio.iscoroutine(res):
