@@ -7,12 +7,17 @@ import { Signup } from './pages/Signup';
 import { Overview } from './pages/Overview';
 import { DigitalTwin } from './pages/DigitalTwin';
 import { Optimizer } from './pages/Optimizer';
+import { Renewables } from './pages/Renewables';
+import { Battery } from './pages/Battery';
+import { Grid } from './pages/Grid';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import {
   Sun,
   LayoutDashboard,
   Cpu,
   Zap,
+  BatteryCharging,
+  Globe,
   Activity,
   FileSpreadsheet,
   Settings as SettingsIcon,
@@ -39,7 +44,10 @@ const AuthenticatedApp: React.FC = () => {
   const navItems = [
     { id: 'overview', label: 'Mission Control', icon: LayoutDashboard },
     { id: 'twin', label: 'Digital Twin', icon: Cpu },
-    { id: 'optimizer', label: 'Optimizer & Decisions', icon: Zap },
+    { id: 'optimizer', label: 'Optimizer', icon: Zap },
+    { id: 'renewables', label: 'Renewables', icon: Sun },
+    { id: 'battery', label: 'Battery BESS', icon: BatteryCharging },
+    { id: 'grid', label: 'Grid & Tariffs', icon: Globe },
     { id: 'scheduler', label: 'Scheduler & Alerts', icon: Activity },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet },
     ...(isAdmin ? [{ id: 'settings', label: 'Settings', icon: SettingsIcon }] : []),
@@ -135,6 +143,12 @@ const AuthenticatedApp: React.FC = () => {
             <DigitalTwin />
           ) : activeTab === 'optimizer' ? (
             <Optimizer />
+          ) : activeTab === 'renewables' ? (
+            <Renewables />
+          ) : activeTab === 'battery' ? (
+            <Battery />
+          ) : activeTab === 'grid' ? (
+            <Grid />
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-sm">
               <h1 className="text-xl font-bold tracking-tight text-white capitalize">

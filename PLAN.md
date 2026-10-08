@@ -167,7 +167,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/pages/Optimizer.tsx`, `frontend/src/components/DecisionCard.tsx`, `frontend/src/components/AlternativesModal.tsx`.
   - **Verification**: Component tests verifying decision detail expansion, filter actions, and alternative rejection reasons.
 
-- [ ] **Milestone 28: Asset-Specific Views (Renewables, Battery, Grid)**
+- [x] **Milestone 28: Asset-Specific Views (Renewables, Battery, Grid)**
   - **Goal**: Build dedicated operational pages:
     - Renewables: Solar and Wind live power, daily yield, availability status, historical charts.
     - Battery: SoC gauge, charge/discharge rate, health (SOH), temperature, reserve floor indicator, operational limits.
