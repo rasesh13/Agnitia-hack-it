@@ -31,7 +31,7 @@ def test_jwt_creation_and_decoding():
     """Verify JWT access token issuance and claims parsing."""
     token = create_access_token(
         user_id=42,
-        email="operator@surya.local",
+        email="operator@surya-energy.com",
         role=UserRole.OPERATOR,
         token_version=2,
         expires_delta=timedelta(minutes=30),
@@ -39,7 +39,7 @@ def test_jwt_creation_and_decoding():
 
     payload = decode_access_token(token)
     assert payload.sub == "42"
-    assert payload.email == "operator@surya.local"
+    assert payload.email == "operator@surya-energy.com"
     assert payload.role == UserRole.OPERATOR
     assert payload.token_version == 2
     assert payload.exp > payload.iat
@@ -49,7 +49,7 @@ def test_jwt_expiration():
     """Verify expired JWT tokens raise ExpiredSignatureError."""
     expired_token = create_access_token(
         user_id=1,
-        email="admin@surya.local",
+        email="admin@surya-energy.com",
         role=UserRole.ADMIN,
         token_version=1,
         expires_delta=timedelta(seconds=-10),  # expired 10 seconds ago
@@ -63,7 +63,7 @@ def test_jwt_invalid_signature():
     """Verify token signed with different key raises InvalidSignatureError."""
     payload = {
         "sub": "1",
-        "email": "admin@surya.local",
+        "email": "admin@surya-energy.com",
         "role": "admin",
         "token_version": 1,
         "iat": 1000,

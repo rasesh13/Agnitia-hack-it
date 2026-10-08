@@ -26,18 +26,18 @@ async def test_auth_signup_flow():
         # 1. Sign up first user (should be ADMIN)
         res1 = await client.post(
             "/api/v1/auth/signup",
-            json={"email": "admin@surya.local", "password": "StrongPassword123!"},
+            json={"email": "admin@surya-energy.com", "password": "StrongPassword123!"},
         )
         assert res1.status_code == 201
         data1 = res1.json()
         assert "access_token" in data1
-        assert data1["user"]["email"] == "admin@surya.local"
+        assert data1["user"]["email"] == "admin@surya-energy.com"
         assert data1["user"]["role"] == UserRole.ADMIN.value
 
         # 2. Sign up second user (should be VIEWER)
         res2 = await client.post(
             "/api/v1/auth/signup",
-            json={"email": "operator@surya.local", "password": "StrongPassword123!"},
+            json={"email": "operator@surya-energy.com", "password": "StrongPassword123!"},
         )
         assert res2.status_code == 201
         data2 = res2.json()
@@ -46,7 +46,7 @@ async def test_auth_signup_flow():
         # 3. Duplicate email rejection
         res3 = await client.post(
             "/api/v1/auth/signup",
-            json={"email": "admin@surya.local", "password": "AnotherPassword123!"},
+            json={"email": "admin@surya-energy.com", "password": "AnotherPassword123!"},
         )
         assert res3.status_code == 409
         assert res3.json()["error"]["code"] == "USER_ALREADY_EXISTS"
@@ -60,13 +60,13 @@ async def test_auth_login_and_me_endpoints():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         await client.post(
             "/api/v1/auth/signup",
-            json={"email": "ops@surya.local", "password": "SecurePassword123!"},
+            json={"email": "ops@surya-energy.com", "password": "SecurePassword123!"},
         )
 
         # Valid login
         login_res = await client.post(
             "/api/v1/auth/login",
-            json={"email": "ops@surya.local", "password": "SecurePassword123!"},
+            json={"email": "ops@surya-energy.com", "password": "SecurePassword123!"},
         )
         assert login_res.status_code == 200
         token = login_res.json()["access_token"]
@@ -77,12 +77,12 @@ async def test_auth_login_and_me_endpoints():
             headers={"Authorization": f"Bearer {token}"},
         )
         assert me_res.status_code == 200
-        assert me_res.json()["email"] == "ops@surya.local"
+        assert me_res.json()["email"] == "ops@surya-energy.com"
 
         # Invalid login
         bad_login = await client.post(
             "/api/v1/auth/login",
-            json={"email": "ops@surya.local", "password": "WrongPassword!"},
+            json={"email": "ops@surya-energy.com", "password": "WrongPassword!"},
         )
         assert bad_login.status_code == 401
         assert bad_login.json()["error"]["code"] == "INVALID_CREDENTIALS"
@@ -101,7 +101,7 @@ async def test_logout_revokes_token():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         signup_res = await client.post(
             "/api/v1/auth/signup",
-            json={"email": "revoketest@surya.local", "password": "SecurePassword123!"},
+            json={"email": "revoketest@surya-energy.com", "password": "SecurePassword123!"},
         )
         token = signup_res.json()["access_token"]
 
@@ -131,13 +131,13 @@ async def test_ip_rate_limiting():
         for i in range(10):
             await client.post(
                 "/api/v1/auth/signup",
-                json={"email": f"user{i}@surya.local", "password": "Password123!"},
+                json={"email": f"user{i}@surya-energy.com", "password": "Password123!"},
             )
 
         # 11th request must be blocked
         blocked_res = await client.post(
             "/api/v1/auth/signup",
-            json={"email": "overflow@surya.local", "password": "Password123!"},
+            json={"email": "overflow@surya-energy.com", "password": "Password123!"},
         )
         assert blocked_res.status_code == 429
         assert blocked_res.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
