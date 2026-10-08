@@ -43,7 +43,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/db/database.py`, `backend/models/base.py`, `alembic.ini`, `backend/db/migrations/env.py`, `backend/db/migrations/script.py.mako`, `tests/backend/test_database.py`.
   - **Verification**: `pytest tests/backend/test_database.py` validates database connection and session creation against SQLite and PostgreSQL.
 
-- [ ] **Milestone 4: User Model, Authentication Schemas, & Password Hashing**
+- [x] **Milestone 4: User Model, Authentication Schemas, & Password Hashing**
   - **Goal**: Define `User` SQLAlchemy model, role enum (`operator`, `admin`, `viewer`), Pydantic auth schemas, Argon2id password hashing helper, and JWT token generation/verification utilities.
   - **Files**: `backend/models/user.py`, `backend/models/schemas.py`, `backend/services/auth_crypto.py`, `tests/backend/test_auth_crypto.py`.
   - **Verification**: `pytest tests/backend/test_auth_crypto.py` tests Argon2id hashing/verification, JWT token creation, decoding, expiration, and claims (`user_id`, `role`, `token_version`).
