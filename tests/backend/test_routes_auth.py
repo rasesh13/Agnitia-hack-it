@@ -1,0 +1,143 @@
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from backend.api.rate_limit import rate_limiter
+from backend.db.database import close_db, get_async_engine, init_db
+from backend.main import create_app
+from backend.models.user import UserRole
+
+
+@pytest.fixture(autouse=True)
+async def setup_test_environment():
+    """Sets up an isolated in-memory SQLite database and resets rate limits."""
+    engine = get_async_engine("sqlite+aiosqlite:///:memory:")
+    await init_db(engine)
+    rate_limiter.reset()
+    yield
+    await close_db()
+
+
+@pytest.mark.asyncio
+async def test_auth_signup_flow():
+    """Verify signup flow, first user admin promotion, and second user default viewer role."""
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        # 1. Sign up first user (should be ADMIN)
+        res1 = await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "admin@surya.local", "password": "StrongPassword123!"},
+        )
+        assert res1.status_code == 201
+        data1 = res1.json()
+        assert "access_token" in data1
+        assert data1["user"]["email"] == "admin@surya.local"
+        assert data1["user"]["role"] == UserRole.ADMIN.value
+
+        # 2. Sign up second user (should be VIEWER)
+        res2 = await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "operator@surya.local", "password": "StrongPassword123!"},
+        )
+        assert res2.status_code == 201
+        data2 = res2.json()
+        assert data2["user"]["role"] == UserRole.VIEWER.value
+
+        # 3. Duplicate email rejection
+        res3 = await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "admin@surya.local", "password": "AnotherPassword123!"},
+        )
+        assert res3.status_code == 409
+        assert res3.json()["error"]["code"] == "USER_ALREADY_EXISTS"
+
+
+@pytest.mark.asyncio
+async def test_auth_login_and_me_endpoints():
+    """Verify login validation, profile retrieval via /me, and invalid credentials handling."""
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "ops@surya.local", "password": "SecurePassword123!"},
+        )
+
+        # Valid login
+        login_res = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "ops@surya.local", "password": "SecurePassword123!"},
+        )
+        assert login_res.status_code == 200
+        token = login_res.json()["access_token"]
+
+        # Call /me with valid token
+        me_res = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert me_res.status_code == 200
+        assert me_res.json()["email"] == "ops@surya.local"
+
+        # Invalid login
+        bad_login = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "ops@surya.local", "password": "WrongPassword!"},
+        )
+        assert bad_login.status_code == 401
+        assert bad_login.json()["error"]["code"] == "INVALID_CREDENTIALS"
+
+        # Unauthenticated /me call
+        no_auth_res = await client.get("/api/v1/auth/me")
+        assert no_auth_res.status_code == 401
+        assert no_auth_res.json()["error"]["code"] == "AUTH_REQUIRED"
+
+
+@pytest.mark.asyncio
+async def test_logout_revokes_token():
+    """Verify that calling logout increments token_version and invalidates old token."""
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        signup_res = await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "revoketest@surya.local", "password": "SecurePassword123!"},
+        )
+        token = signup_res.json()["access_token"]
+
+        # Logout to revoke token
+        logout_res = await client.post(
+            "/api/v1/auth/logout",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert logout_res.status_code == 200
+
+        # Subsequent request with old token must be rejected as revoked
+        me_res = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert me_res.status_code == 401
+        assert me_res.json()["error"]["code"] == "AUTH_TOKEN_REVOKED"
+
+
+@pytest.mark.asyncio
+async def test_ip_rate_limiting():
+    """Verify rate limiter blocks bursts exceeding limit."""
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        # Signup has limit of 10 requests per minute
+        for i in range(10):
+            await client.post(
+                "/api/v1/auth/signup",
+                json={"email": f"user{i}@surya.local", "password": "Password123!"},
+            )
+
+        # 11th request must be blocked
+        blocked_res = await client.post(
+            "/api/v1/auth/signup",
+            json={"email": "overflow@surya.local", "password": "Password123!"},
+        )
+        assert blocked_res.status_code == 429
+        assert blocked_res.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
