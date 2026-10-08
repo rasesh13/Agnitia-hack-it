@@ -103,7 +103,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/services/vnm_optimizer.py`, `tests/backend/test_vnm_optimizer.py`.
   - **Verification**: `pytest tests/backend/test_vnm_optimizer.py` tests ratio validation, proportional vs. critical-first allocations, tariff arithmetic, and rounding.
 
-- [ ] **Milestone 16: Flexible Load Advisor & Demand-Side Management**
+- [x] **Milestone 16: Flexible Load Advisor & Demand-Side Management**
   - **Goal**: Implement `LoadAdvisor` service identifying flexible loads, recommending shift windows (start/end), expected surplus/deficit usage, estimated savings, and comfort constraints.
   - **Files**: `backend/services/load_advisor.py`, `tests/backend/test_load_advisor.py`.
   - **Verification**: `pytest tests/backend/test_load_advisor.py` verifies non-flexible loads remain untouched, shift windows are calculated, and savings estimates are generated.
