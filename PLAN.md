@@ -147,7 +147,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `frontend/src/types/index.ts`, `frontend/src/services/api.ts`, `frontend/src/context/AuthContext.tsx`, `frontend/src/components/ProtectedRoute.tsx`, `frontend/src/pages/Login.tsx`, `frontend/src/pages/Signup.tsx`, `frontend/src/App.tsx`.
   - **Verification**: `npm --prefix frontend run lint` and `npm --prefix frontend run build` pass cleanly; tests for AuthContext and route protection.
 
-- [ ] **Milestone 24: Frontend WebSocket Provider & Live Twin State Management**
+- [x] **Milestone 24: Frontend WebSocket Provider & Live Twin State Management**
   - **Goal**: Implement `WebSocketContext` with auto-reconnect, exponential backoff, connection status indicators, staleness timer, and real-time twin state store.
   - **Files**: `frontend/src/context/WebSocketContext.tsx`, `frontend/src/hooks/useLiveTwin.ts`, `frontend/src/components/StatusBadge.tsx`, `frontend/src/components/ConnectionBanner.tsx`.
   - **Verification**: Frontend tests simulating WS events, reconnection backoff, and disconnected staleness badges.

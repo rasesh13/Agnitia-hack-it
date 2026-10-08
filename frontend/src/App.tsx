@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { WebSocketProvider } from './context/WebSocketContext';
+import { ConnectionBanner } from './components/ConnectionBanner';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -118,6 +120,9 @@ const AuthenticatedApp: React.FC = () => {
         </div>
       </header>
 
+      {/* Connection / Staleness Banner */}
+      <ConnectionBanner />
+
       {/* Main Content Viewport */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <ProtectedRoute requiredRole={activeTab === 'settings' ? 'admin' : 'viewer'}>
@@ -126,7 +131,8 @@ const AuthenticatedApp: React.FC = () => {
               {activeTab.replace('_', ' ')} View
             </h1>
             <p className="mt-1 text-xs text-slate-400">
-              Live data pipeline connected. Active role: <span className="font-semibold text-emerald-400 uppercase">{user?.role}</span>.
+              Live data pipeline connected. Active role:{' '}
+              <span className="font-semibold text-emerald-400 uppercase">{user?.role}</span>.
             </p>
           </div>
         </ProtectedRoute>
@@ -161,7 +167,11 @@ const RootApp: React.FC = () => {
     return <Login onNavigateSignup={() => setAuthView('signup')} />;
   }
 
-  return <AuthenticatedApp />;
+  return (
+    <WebSocketProvider>
+      <AuthenticatedApp />
+    </WebSocketProvider>
+  );
 };
 
 export function App() {
