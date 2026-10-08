@@ -14,3 +14,45 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* SURYA Glass Navigation Styles */
+.glass-nav-hero {
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  background: #140f0b8c;
+  border: 1px solid #d9770642;
+  border-radius: 9999px;
+  box-shadow: 0 12px 40px #00000059, 0 0 24px #d977060f;
+}
+
+.glass-nav-panel {
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  background: #100c09f0;
+  border: 1px solid #d9770642;
+  border-radius: 1rem;
+  animation: 0.2s ease-out both navPanelIn;
+  box-shadow: 0 16px 40px #00000073;
+}
+
+@keyframes navPanelIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
