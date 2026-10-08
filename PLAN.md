@@ -128,7 +128,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/ws/websocket_manager.py`, `tests/backend/test_websocket_manager.py`.
   - **Verification**: `pytest tests/backend/test_websocket_manager.py` verifies authentication, envelope format, client broadcast, disconnect handling, and isolation from scheduler loop.
 
-- [ ] **Milestone 21: Decisions, Settings, Control, & Health REST APIs**
+- [x] **Milestone 21: Decisions, Settings, Control, & Health REST APIs**
   - **Goal**: Implement REST endpoints:
     - Decisions: `/api/v1/decisions`, `/api/v1/decisions/latest`, `/api/v1/decisions/{id}`, `/api/v1/decisions/stats`.
     - Settings: `/api/v1/settings/*` (alert thresholds, building tiers, VNM rules, assets, control policy) with optimistic concurrency/version check.
