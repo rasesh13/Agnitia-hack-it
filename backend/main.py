@@ -8,6 +8,7 @@ from backend.api.middleware import (
     register_exception_handlers,
 )
 from backend.api.routes_auth import router as auth_router
+from backend.api.routes_twin import router as twin_router
 from backend.config import get_settings
 from backend.core.logging import setup_logging
 from backend.db.database import close_db, init_db
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
 
     # 4. Mount API Routers
     app.include_router(auth_router)
+    app.include_router(twin_router)
 
     return app
 
