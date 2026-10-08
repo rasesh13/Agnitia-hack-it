@@ -142,7 +142,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/api/routes_export.py`, `backend/services/export_service.py`, `tests/backend/test_export.py`.
   - **Verification**: `pytest tests/backend/test_export.py` verifies CSV structure, PDF rendering, headers, filters, and quality disclosures.
 
-- [ ] **Milestone 23: Frontend Core Setup, Typed API Client, & Auth State**
+- [x] **Milestone 23: Frontend Core Setup, Typed API Client, & Auth State**
   - **Goal**: Setup React 18 + Vite + TS frontend infrastructure: styling, TypeScript API types matching backend schemas, Axios/fetch client with interceptors, AuthContext, ProtectedRoute, Login and Signup pages.
   - **Files**: `frontend/src/types/index.ts`, `frontend/src/services/api.ts`, `frontend/src/context/AuthContext.tsx`, `frontend/src/components/ProtectedRoute.tsx`, `frontend/src/pages/Login.tsx`, `frontend/src/pages/Signup.tsx`, `frontend/src/App.tsx`.
   - **Verification**: `npm --prefix frontend run lint` and `npm --prefix frontend run build` pass cleanly; tests for AuthContext and route protection.
