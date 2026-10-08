@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { ConnectionBanner } from './components/ConnectionBanner';
+import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Overview } from './pages/Overview';
@@ -30,6 +31,7 @@ import {
   LogOut,
   User,
   LineChart,
+  Home,
 } from 'lucide-react';
 
 export type NavTab =
@@ -45,7 +47,11 @@ export type NavTab =
   | 'reports'
   | 'settings';
 
-const AuthenticatedApp: React.FC = () => {
+interface AuthenticatedAppProps {
+  onReturnToLanding?: () => void;
+}
+
+const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }) => {
   const { user, logout, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
 
@@ -84,8 +90,19 @@ const AuthenticatedApp: React.FC = () => {
           </div>
 
           {/* User Profile & Role Badges */}
-          <div className="flex items-center gap-4">
-            <div className="hidden items-center gap-2 text-xs text-slate-400 sm:flex">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {onReturnToLanding && (
+              <button
+                onClick={onReturnToLanding}
+                className="hidden sm:flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-amber-400 transition-colors"
+                title="View SURYA Landing Page"
+              >
+                <Home className="h-3.5 w-3.5" />
+                <span>Overview Site</span>
+              </button>
+            )}
+
+            <div className="hidden items-center gap-2 text-xs text-slate-400 lg:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="font-medium text-slate-300">Prestige University, Indore • MP Microgrid</span>
             </div>
@@ -180,7 +197,7 @@ const AuthenticatedApp: React.FC = () => {
 
 const RootApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [authView, setAuthView] = useState<'login' | 'signup'>('login');
+  const [viewState, setViewState] = useState<'landing' | 'login' | 'signup' | 'console'>('landing');
 
   if (isLoading) {
     return (
@@ -197,17 +214,49 @@ const RootApp: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    if (authView === 'signup') {
-      return <Signup onNavigateLogin={() => setAuthView('login')} />;
-    }
-    return <Login onNavigateSignup={() => setAuthView('signup')} />;
+  // If authenticated and user chose console or is active
+  if (isAuthenticated && viewState !== 'landing') {
+    return (
+      <WebSocketProvider>
+        <AuthenticatedApp onReturnToLanding={() => setViewState('landing')} />
+      </WebSocketProvider>
+    );
   }
 
+  // If user selected login
+  if (viewState === 'login') {
+    return (
+      <Login
+        onNavigateSignup={() => setViewState('signup')}
+        onNavigateLanding={() => setViewState('landing')}
+        onSuccess={() => setViewState('console')}
+      />
+    );
+  }
+
+  // If user selected signup
+  if (viewState === 'signup') {
+    return (
+      <Signup
+        onNavigateLogin={() => setViewState('login')}
+        onNavigateLanding={() => setViewState('landing')}
+        onSuccess={() => setViewState('console')}
+      />
+    );
+  }
+
+  // Default: Public Landing Page
   return (
-    <WebSocketProvider>
-      <AuthenticatedApp />
-    </WebSocketProvider>
+    <LandingPage
+      onLaunchConsole={() => {
+        if (isAuthenticated) {
+          setViewState('console');
+        } else {
+          setViewState('login');
+        }
+      }}
+      onLogin={() => setViewState('login')}
+    />
   );
 };
 
@@ -220,3 +269,4 @@ export function App() {
 }
 
 export default App;
+

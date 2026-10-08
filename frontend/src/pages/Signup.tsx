@@ -4,10 +4,11 @@ import { Sun, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, ShieldCheck } from 
 
 interface SignupProps {
   onNavigateLogin: () => void;
+  onNavigateLanding?: () => void;
   onSuccess?: () => void;
 }
 
-export const Signup: React.FC<SignupProps> = ({ onNavigateLogin, onSuccess }) => {
+export const Signup: React.FC<SignupProps> = ({ onNavigateLogin, onNavigateLanding, onSuccess }) => {
   const { signup, error, clearError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -164,14 +165,26 @@ export const Signup: React.FC<SignupProps> = ({ onNavigateLogin, onSuccess }) =>
         </form>
 
         {/* Footer info */}
-        <div className="pt-2 text-center text-xs text-slate-400">
-          <span>Already have an account? </span>
-          <button
-            onClick={onNavigateLogin}
-            className="font-medium text-emerald-400 hover:text-emerald-300 hover:underline"
-          >
-            Sign in here
-          </button>
+        <div className="pt-2 text-center text-xs text-slate-400 space-y-2">
+          <div>
+            <span>Already have an account? </span>
+            <button
+              onClick={onNavigateLogin}
+              className="font-medium text-emerald-400 hover:text-emerald-300 hover:underline"
+            >
+              Sign in here
+            </button>
+          </div>
+          {onNavigateLanding && (
+            <div>
+              <button
+                onClick={onNavigateLanding}
+                className="text-slate-400 hover:text-amber-400 transition-colors"
+              >
+                ← Return to SURYA Landing Page
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

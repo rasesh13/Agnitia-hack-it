@@ -85,7 +85,7 @@ export const Reports: React.FC = () => {
           notes: [
             'Regional carbon reduction computed using CEA Baseline v18.0 standard (0.82 kg CO2e/kWh).',
             'All monetary savings calculated against prevailing Time-of-Day (TOD) tariff schedule.',
-            'Telemetry completeness exceeds 98% quality compliance threshold.',
+            'Telemetry completeness exceeds 98% quality assurance threshold.',
           ],
         },
       });
@@ -126,7 +126,7 @@ export const Reports: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Reports & Data Export</h1>
           <p className="mt-1 text-xs text-slate-400">
-            Generate executive compliance summaries, ESG carbon accounting sheets, and audit CSVs
+            Generate executive yield summaries, ESG carbon accounting sheets, and audit CSVs
           </p>
         </div>
 
