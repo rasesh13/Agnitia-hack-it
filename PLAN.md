@@ -58,7 +58,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/models/digital_twin.py`, `backend/models/config.py`, `backend/db/migrations/versions/001_initial_schema.py`, `tests/backend/test_models.py`.
   - **Verification**: Run migration upgrade and downgrade in tests; verify table structures, foreign keys, and constraints.
 
-- [ ] **Milestone 7: Telemetry Point, Current State, & Decision Log Data Models**
+- [x] **Milestone 7: Telemetry Point, Current State, & Decision Log Data Models**
   - **Goal**: Define SQLAlchemy models for `TelemetryPoint` (interval/historical data), `AssetCurrentState` (latest twin state for fast reads), `DecisionCycle`, `DecisionLog`, `DecisionAlternative`, and `ControlCommand`. Update migration.
   - **Files**: `backend/models/telemetry.py`, `backend/models/decision_log.py`, `backend/db/migrations/versions/002_telemetry_decisions.py`, `tests/backend/test_telemetry_models.py`.
   - **Verification**: `pytest tests/backend/test_telemetry_models.py` verifies persistence and querying of telemetry points, digital twin states, and append-only decision audit records.
