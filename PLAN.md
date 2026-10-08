@@ -83,7 +83,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `backend/api/routes_twin.py`, `tests/backend/test_routes_twin.py`.
   - **Verification**: `pytest tests/backend/test_routes_twin.py` validates JSON schema compliance, query filtering, and freshness headers/fields.
 
-- [ ] **Milestone 12: Reliability Guard Engine**
+- [x] **Milestone 12: Reliability Guard Engine**
   - **Goal**: Implement pure `ReliabilityGuard` service: reserve floor enforcement, battery minimum SoC protection, critical building/load protection before non-critical, deterministic shedding priority calculation, and emergency decision generation.
   - **Files**: `backend/services/reliability_guard.py`, `tests/backend/test_reliability_guard.py`.
   - **Verification**: `pytest tests/backend/test_reliability_guard.py` proves hard reliability constraints override economic actions, reserve floors are never violated, and shedding order is deterministic.
