@@ -33,7 +33,7 @@ This document outlines the step-by-step implementation plan for **SURYA** (Smart
   - **Files**: `.gitignore`, `pyproject.toml`, `requirements.txt`, `.env.example`, `frontend/package.json`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `frontend/index.html`.
   - **Verification**: `ruff check backend/` runs cleanly; `npm --prefix frontend install` and `npm --prefix frontend run build` complete without errors.
 
-- [ ] **Milestone 2: Backend Core Configuration & Startup Validation**
+- [x] **Milestone 2: Backend Core Configuration & Startup Validation**
   - **Goal**: Implement typed settings using Pydantic Settings (`backend/config.py`) validating all required configuration groups (Server, CORS, Auth, DB, Telemetry, Scheduler, Optimization weights summing to 1.0, Thresholds, Retention, Production checks), custom error envelope schemas, and structured logging.
   - **Files**: `backend/config.py`, `backend/models/schemas.py`, `backend/core/logging.py`, `tests/backend/test_config.py`.
   - **Verification**: `pytest tests/backend/test_config.py` passes for valid configurations and strictly rejects invalid weights, out-of-order thresholds, or weak secrets in production.
