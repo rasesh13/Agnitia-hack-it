@@ -26,7 +26,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application source code and migrations
 COPY backend /app/backend
-COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 COPY backend/entrypoint.sh /app/entrypoint.sh
 
