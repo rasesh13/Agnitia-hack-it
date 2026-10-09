@@ -69,8 +69,21 @@ cd frontend
 # Install Node dependencies
 npm install
 
+# Build the 3D campus simulator into public/simulator (needed by the Digital Twin tab)
+npm run build:simulator
+
 # Start Vite development server
 npm run dev
+```
+
+#### 3D Campus Simulator:
+The Digital Twin tab embeds a 3D model of Prestige University, Indore (with other campuses selectable) from the standalone app in [`simulator/`](simulator/) (React 19 + three.js). It is a visualization: its weather-driven energy figures come from the simulator's own model, not from site telemetry. `npm run build:simulator` builds it into `frontend/public/simulator/` (git-ignored); the frontend Docker image builds it automatically. To work on it directly:
+
+```bash
+cd simulator
+npm ci
+npm run dev   # http://127.0.0.1:5173/#prestige-university
+npm test      # energy model and weather tests
 ```
 
 ---
