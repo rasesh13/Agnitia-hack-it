@@ -579,12 +579,14 @@ class AgnitiaMLForecaster:
         except Exception as e:
             logger.warning("Failed fetching live weather from Open-Meteo for %s (%s). Falling back to cached/model.", region_id, e)
             if region_id in self._weather_cache:
-                return self._weather_cache[region_id][1]
+                prev_data = self._weather_cache[region_id][1]
+                self._weather_cache[region_id] = (now_ts, prev_data)
+                return prev_data
 
             ist_now = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
             hour = ist_now.hour + ist_now.minute / 60.0
             solar_elev = max(0.0, math.sin(max(0.0, min(math.pi, (hour - 6.0) / 12.0 * math.pi))))
-            return {
+            fallback_data = {
                 "region_id": region_id,
                 "location_name": cfg["name"],
                 "latitude": lat,
@@ -601,6 +603,8 @@ class AgnitiaMLForecaster:
                 "fetched_at": datetime.now(timezone.utc).isoformat(),
                 "is_live_api": False,
             }
+            self._weather_cache[region_id] = (now_ts, fallback_data)
+            return fallback_data
 
     def predict_realtime_point(
         self,
@@ -705,6 +709,7 @@ class AgnitiaMLForecaster:
         else:
             pred_solar_p50 = solar_physics_kw
             pred_solar_p10 = round(pred_solar_p50 * 0.85, 1)
+            pred_solar_p90 = round(pred_solar_p50 * 1.15, 1)
         # Enforce monotonic quantile ordering [P10 <= P50 <= P90]
         pred_solar_p10, pred_solar_p50, pred_solar_p90 = sorted([pred_solar_p10, pred_solar_p50, pred_solar_p90])
 
