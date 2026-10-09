@@ -16,6 +16,9 @@ export default {
           900: '#14532d',
         },
       },
+      fontFamily: {
+        display: ['"Outfit Variable"', 'sans-serif'],
+      },
     },
   },
   plugins: [],
