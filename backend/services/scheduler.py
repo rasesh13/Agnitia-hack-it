@@ -218,6 +218,8 @@ class DecisionScheduler:
             except Exception as e:
                 logger.error("Unexpected error in scheduler loop: %s", e)
 
+            # Re-read each cycle so a cadence saved from Settings applies without a restart.
+            interval_secs = self.settings.DECISION_CYCLE_SECONDS
             try:
                 await asyncio.wait_for(
                     self._shutdown_event.wait(), timeout=interval_secs
