@@ -136,3 +136,62 @@ body {
     transform: none;
   }
 }
+
+/* Page sections rise in one after another. */
+.surya-page > div > * {
+  animation: suryaRise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.surya-page > div > *:nth-child(2) { animation-delay: 0.05s; }
+.surya-page > div > *:nth-child(3) { animation-delay: 0.1s; }
+.surya-page > div > *:nth-child(4) { animation-delay: 0.15s; }
+.surya-page > div > *:nth-child(5) { animation-delay: 0.2s; }
+.surya-page > div > *:nth-child(n + 6) { animation-delay: 0.25s; }
+
+/* Page titles: soft white-to-silver gradient (skipped when the heading holds an icon). */
+.surya-page h1:not(:has(svg)) {
+  background: linear-gradient(92deg, #ffffff 0%, #e2e8f0 55%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Dark panels: faint top highlight, depth shadow and a softer border. */
+.surya-page [class*="rounded-3xl"][class*="border-slate-800"],
+.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-900"] {
+  border-color: rgba(255, 255, 255, 0.07);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 45%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.surya-page [class*="rounded-3xl"][class*="border-slate-800"]:hover,
+.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-900"]:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Inner tiles sitting inside panels. */
+.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-950"] {
+  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(2, 6, 23, 0.55);
+}
+
+/* Tables: calmer header and row hover. */
+.surya-page table thead {
+  background: rgba(2, 6, 23, 0.5);
+}
+
+.surya-page table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Numbers line up in columns. */
+.surya-page .font-mono,
+.surya-page table td {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surya-page > div > * {
+    animation: none;
+  }
+}
