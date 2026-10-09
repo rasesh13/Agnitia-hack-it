@@ -11,9 +11,34 @@ import {
   Filter,
   Search,
   Radio,
+  Sun,
 } from 'lucide-react';
 
 const INITIAL_DEMO_ALERTS: SystemAlert[] = [
+  {
+    id: 'alt-forecast-01',
+    severity: 'warning',
+    title: 'High Solar Generation Window — Curtailment Risk',
+    description: 'LightGBM 24h forecast predicts solar generation reaching 188.0 kW (exceeding daytime campus base load of 145 kW). Curtailment risk without active BESS storage.',
+    source: 'Agnitia ML Forecast Engine',
+    metric_name: 'forecast_solar_peak_kw',
+    current_value: 188.0,
+    threshold_value: 160.0,
+    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    is_acknowledged: false,
+  },
+  {
+    id: 'alt-forecast-02',
+    severity: 'warning',
+    title: 'Rapid Wind Ramp-Down Alert',
+    description: 'Multi-horizon aerodynamic forecast detects >30% hourly drop from 43.6 kW to 9.5 kW at T+6h. Storage buffer discharge required to prevent deficit.',
+    source: 'Agnitia ML Forecast Engine',
+    metric_name: 'forecast_wind_ramp_rate',
+    current_value: -34.2,
+    threshold_value: -30.0,
+    created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    is_acknowledged: false,
+  },
   {
     id: 'alt-001',
     severity: 'warning',
@@ -55,9 +80,44 @@ export const Alerts: React.FC = () => {
   const { activeAlerts: wsAlerts } = useWebSocket();
   const [alerts, setAlerts] = useState<SystemAlert[]>(INITIAL_DEMO_ALERTS);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'acknowledged'>('all');
+  const [sourceCategory, setSourceCategory] = useState<'all' | 'forecast' | 'hardware'>('all');
   const [severityFilter, setSeverityFilter] = useState<'all' | AlertSeverity>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAcknowledging, setIsAcknowledging] = useState<Record<string, boolean>>({});
+
+  // Fetch forecast alerts from the live backend
+  useEffect(() => {
+    fetch('/api/v1/forecast/48h?region_id=central_india_mp_indore')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.alerts && data.alerts.length > 0) {
+          setAlerts((prev) => {
+            const updated = [...prev];
+            for (const fAlert of data.alerts) {
+              const existingIdx = updated.findIndex((a) => a.id === fAlert.id);
+              const mappedAlert: SystemAlert = {
+                id: fAlert.id,
+                severity: fAlert.severity as AlertSeverity,
+                title: fAlert.title,
+                description: `${fAlert.message} Recommended Action: ${fAlert.recommended_action}`,
+                source: 'Agnitia ML Forecast Engine',
+                metric_name: fAlert.target === 'solar' ? 'forecast_solar_kw' : 'forecast_wind_kw',
+                current_value: 185.0,
+                created_at: fAlert.timestamp || new Date().toISOString(),
+                is_acknowledged: false,
+              };
+              if (existingIdx === -1) {
+                updated.unshift(mappedAlert);
+              }
+            }
+            return updated;
+          });
+        }
+      })
+      .catch(() => {
+        // Fallback to initial alerts
+      });
+  }, []);
 
   // Append any real-time alerts received over WebSocket
   useEffect(() => {
@@ -106,11 +166,14 @@ export const Alerts: React.FC = () => {
   const acknowledgedAlerts = alerts.filter((a) => a.is_acknowledged);
   const criticalCount = activeAlerts.filter((a) => a.severity === 'critical').length;
   const warningCount = activeAlerts.filter((a) => a.severity === 'warning').length;
+  const forecastCount = activeAlerts.filter((a) => a.source.includes('Forecast')).length;
 
   const filteredAlerts = alerts.filter((a) => {
     if (activeTab === 'active' && a.is_acknowledged) return false;
     if (activeTab === 'acknowledged' && !a.is_acknowledged) return false;
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false;
+    if (sourceCategory === 'forecast' && !a.source.includes('Forecast')) return false;
+    if (sourceCategory === 'hardware' && a.source.includes('Forecast')) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -127,9 +190,15 @@ export const Alerts: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">System Alerts & Fault Engine</h1>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400 border border-rose-500/20">
+              Operations Center
+            </span>
+            <span className="text-xs text-slate-400 font-mono">Live Faults & 48h Generation Alerts</span>
+          </div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">System Alerts & Fault Engine</h1>
           <p className="mt-1 text-xs text-slate-400">
-            Real-time threshold breach notifications, telemetry staleness alarms, and audit acknowledgements
+            Real-time threshold breaches, telemetry staleness alarms, and 48-hour forward-looking high surplus / low generation warnings.
           </p>
         </div>
 
@@ -162,18 +231,18 @@ export const Alerts: React.FC = () => {
         />
 
         <MetricCard
-          title="Acknowledged"
-          value={acknowledgedAlerts.length}
-          subtitle="Resolved / Dismissed Today"
-          icon={CheckCircle2}
-          iconColor="text-emerald-400"
-          iconBg="bg-emerald-500/10 border-emerald-500/20"
+          title="Generation Forecast Alerts"
+          value={forecastCount}
+          subtitle="Surplus & Ramp-Down Risks"
+          icon={Sun}
+          iconColor="text-sky-400"
+          iconBg="bg-sky-500/10 border-sky-500/20"
         />
 
         <MetricCard
           title="Total Alarms Tracked"
           value={alerts.length}
-          subtitle="Historical & In-Flight"
+          subtitle="Hardware & Forecast Events"
           icon={Bell}
           iconColor="text-purple-400"
           iconBg="bg-purple-500/10 border-purple-500/20"
@@ -183,64 +252,101 @@ export const Alerts: React.FC = () => {
       {/* Filters & Actions Bar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 rounded-xl bg-slate-950/60 p-1 border border-slate-800">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === 'all'
-                ? 'bg-slate-800 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            All ({alerts.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === 'active'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Active ({activeAlerts.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('acknowledged')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === 'acknowledged'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Acknowledged ({acknowledgedAlerts.length})
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl bg-slate-950/60 p-1 border border-slate-800">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeTab === 'all'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All ({alerts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeTab === 'active'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Active ({activeAlerts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('acknowledged')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeTab === 'acknowledged'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Acknowledged ({acknowledgedAlerts.length})
+            </button>
+          </div>
+
+          {/* Source Category Filter */}
+          <div className="flex items-center gap-1 rounded-xl bg-slate-950/60 p-1 border border-slate-800 text-xs">
+            <button
+              onClick={() => setSourceCategory('all')}
+              className={`rounded-lg px-2.5 py-1 transition-all ${
+                sourceCategory === 'all'
+                  ? 'bg-slate-800 text-white font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All Types
+            </button>
+            <button
+              onClick={() => setSourceCategory('forecast')}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 transition-all ${
+                sourceCategory === 'forecast'
+                  ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Sun className="h-3 w-3 text-amber-400" />
+              <span>Generation Forecast Alerts ({forecastCount})</span>
+            </button>
+            <button
+              onClick={() => setSourceCategory('hardware')}
+              className={`rounded-lg px-2.5 py-1 transition-all ${
+                sourceCategory === 'hardware'
+                  ? 'bg-slate-800 text-white font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Hardware / Grid Alarms
+            </button>
+          </div>
         </div>
 
-        {/* Severity Selector & Search */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Filter className="h-3.5 w-3.5" />
+        {/* Severity & Search Filters */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search alarms, assets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-800 bg-slate-950/80 pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 sm:w-48"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Filter className="h-3.5 w-3.5 text-slate-500" />
             <select
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value as 'all' | AlertSeverity)}
-              className="rounded-xl border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-slate-200 focus:border-emerald-500 focus:outline-none"
+              onChange={(e) => setSeverityFilter(e.target.value as any)}
+              className="rounded-xl border border-slate-800 bg-slate-950/80 px-2.5 py-1.5 text-xs text-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical Only</option>
-              <option value="warning">Warning Only</option>
-              <option value="info">Info Only</option>
+              <option value="warning">Warnings Only</option>
+              <option value="info">Info Notices</option>
             </select>
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search alerts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-48 rounded-xl border border-slate-700 bg-slate-950/60 pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
           </div>
         </div>
       </div>
@@ -248,11 +354,11 @@ export const Alerts: React.FC = () => {
       {/* Alerts List */}
       <div className="space-y-3">
         {filteredAlerts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-800 bg-slate-900/40 py-12 text-center">
-            <CheckCircle2 className="h-10 w-10 text-emerald-500/60" />
-            <h3 className="mt-3 text-base font-bold text-white">All Clear — No Matching Alerts</h3>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-12 text-center">
+            <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-3" />
+            <div className="text-base font-bold text-white">No Matching Operational Alarms</div>
             <p className="mt-1 text-xs text-slate-400 max-w-sm">
-              All monitored telemetry thresholds, data freshness heartbeat guards, and grid constraints are within nominal limits.
+              All microgrid assets, utility tie interconnections, and 48-hour generation forecast boundaries are within safe operational tolerances.
             </p>
           </div>
         ) : (
