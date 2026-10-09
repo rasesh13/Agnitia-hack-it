@@ -16,7 +16,9 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
     ? typeof lastUpdate === 'string'
       ? new Date(lastUpdate).toLocaleTimeString()
       : lastUpdate.toLocaleTimeString()
-    : 'Waiting...';
+    : stalenessSeconds <= 2
+    ? 'just now'
+    : `${stalenessSeconds}s ago`;
 
   if (isStale) {
     return (
@@ -34,7 +36,7 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
       </span>
       <Activity className="h-3.5 w-3.5 text-emerald-400" />
-      <span>Live ({formattedTime})</span>
+      <span>Live • {formattedTime}</span>
     </div>
   );
 };
