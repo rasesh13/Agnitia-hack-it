@@ -12,7 +12,10 @@ import {
   Sliders,
   Layers,
   Loader2,
+  ChevronDown,
 } from 'lucide-react';
+
+const PAGE_SIZE = 10;
 
 export const Optimizer: React.FC = () => {
   const [decisions, setDecisions] = useState<DecisionLog[]>([]);
@@ -21,6 +24,7 @@ export const Optimizer: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
   const [modalAlternatives, setModalAlternatives] = useState<DecisionAlternative[]>([]);
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -45,6 +49,11 @@ export const Optimizer: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Start from the newest page whenever the filter changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedType]);
 
   const handleOpenAlternatives = async (cycleId: string) => {
     setSelectedCycleId(cycleId);
@@ -154,13 +163,27 @@ export const Optimizer: React.FC = () => {
         </div>
       ) : decisions.length > 0 ? (
         <div className="space-y-4">
-          {decisions.map((dec) => (
+          {decisions.slice(0, visibleCount).map((dec) => (
             <DecisionCard
               key={dec.id}
               decision={dec}
               onViewAlternatives={handleOpenAlternatives}
             />
           ))}
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <span className="text-[11px] text-slate-500">
+              Showing {Math.min(visibleCount, decisions.length)} of {decisions.length} decisions
+            </span>
+            {visibleCount < decisions.length && (
+              <button
+                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+                Show {Math.min(PAGE_SIZE, decisions.length - visibleCount)} more
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 rounded-3xl border border-slate-800 bg-slate-900/40 text-center text-xs text-slate-400">
