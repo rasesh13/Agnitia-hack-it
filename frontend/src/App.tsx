@@ -356,9 +356,19 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
 };
 
 
+const CONSOLE_VIEW_KEY = 'surya_view';
+
 const RootApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [viewState, setViewState] = useState<'landing' | 'login' | 'signup' | 'console'>('landing');
+  // Remember that the console was open, so a page refresh does not drop a signed-in user on the landing page.
+  const [viewState, setViewStateRaw] = useState<'landing' | 'login' | 'signup' | 'console'>(() =>
+    sessionStorage.getItem(CONSOLE_VIEW_KEY) === 'console' ? 'console' : 'landing',
+  );
+  const setViewState = (next: 'landing' | 'login' | 'signup' | 'console') => {
+    if (next === 'console') sessionStorage.setItem(CONSOLE_VIEW_KEY, 'console');
+    else sessionStorage.removeItem(CONSOLE_VIEW_KEY);
+    setViewStateRaw(next);
+  };
 
   if (isLoading) {
     return (
