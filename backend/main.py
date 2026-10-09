@@ -113,7 +113,7 @@ def create_app() -> FastAPI:
                 "docs_url": "/docs",
                 "redoc_url": "/redoc",
                 "health_url": "/health",
-                "frontend_console": "https://agnitia-hack-it.vercel.app",
+                "frontend_console": "https://surya-sim.vercel.app",
             })
 
         html = """<!DOCTYPE html>
@@ -122,7 +122,7 @@ def create_app() -> FastAPI:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SURYA Platform Engine — Production Backend API</title>
-  <link rel="icon" type="image/svg+xml" href="https://agnitia-hack-it.vercel.app/surya-mark.svg">
+  <link rel="icon" type="image/svg+xml" href="https://surya-sim.vercel.app/surya-mark.svg">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -330,7 +330,7 @@ def create_app() -> FastAPI:
       <a href="/docs" class="btn btn-primary">📖 Interactive API Docs (Swagger)</a>
       <a href="/redoc" class="btn btn-secondary">📚 ReDoc Documentation</a>
       <a href="/health" class="btn btn-secondary">🩺 System Health Check</a>
-      <a href="https://agnitia-hack-it.vercel.app" target="_blank" class="btn btn-emerald">🖥️ Open Vercel Web Console →</a>
+      <a href="https://surya-sim.vercel.app" target="_blank" class="btn btn-emerald">🖥️ Open Vercel Web Console →</a>
     </div>
 
     <div class="grid">

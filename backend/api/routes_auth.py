@@ -155,35 +155,27 @@ async def google_auth(
     email: str
     google_sub: str
 
-    # Fast demo fallback for presentations / development without registered Google Cloud OAuth client
-    if payload.id_token.startswith("demo_google_") or payload.id_token in {"mock_google_token", "demo_token"}:
-        if "@" in payload.id_token:
-            email = payload.id_token.replace("demo_google_", "").strip()
-        else:
-            email = "raseshvarshney@gmail.com"
-        google_sub = f"google_user_{email.split('@')[0]}"
-    else:
-        if not settings.GOOGLE_CLIENT_ID:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "code": "GOOGLE_AUTH_NOT_CONFIGURED",
-                    "message": "Google authentication is not configured on this server.",
-                },
-            )
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "GOOGLE_AUTH_NOT_CONFIGURED",
+                "message": "Google authentication is not configured on this server.",
+            },
+        )
 
-        try:
-            identity = await verify_google_id_token_async(payload.id_token, settings.GOOGLE_CLIENT_ID)
-            email = identity.email
-            google_sub = identity.sub
-        except GoogleTokenError as err:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "code": "GOOGLE_TOKEN_INVALID",
-                    "message": "Failed to verify Google ID token.",
-                },
-            ) from err
+    try:
+        identity = await verify_google_id_token_async(payload.id_token, settings.GOOGLE_CLIENT_ID)
+        email = identity.email
+        google_sub = identity.sub
+    except GoogleTokenError as err:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "GOOGLE_TOKEN_INVALID",
+                "message": "Failed to verify Google ID token.",
+            },
+        ) from err
     user_repo = UserRepository(session)
     user = await user_repo.get_by_google_sub(google_sub)
     if user is None:
