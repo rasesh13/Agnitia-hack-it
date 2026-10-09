@@ -1,111 +1,193 @@
-# SURYA Production Operations & Runbooks Manual
+# SURYA Platform Operations Manual & Runbooks
 
-This guide outlines standard operational procedures, emergency incident response runbooks, and disaster recovery workflows for the SURYA Operations Platform.
+> **Deployment Configurations, Environment Profiles, Database Migrations, and Emergency Runbooks**
 
 ---
 
-## Runbook 1: Adapter Disconnection & Hardware Telemetry Loss
+## 1. Environment Configuration Variables (`.env`)
 
-### Symptoms
-- Overview dashboard displays `STALE` or `DISCONNECTED` banner.
-- Data Freshness Indicator age exceeds threshold ($> 30\text{s}$).
-- Telemetry quality flags transition to `stale` or `missing`.
+SURYA follows 12-factor configuration principles managed via Pydantic Settings (`backend/config.py`).
 
-### Automated System Behavior
-1. The Digital Twin Store marks the affected asset's telemetry quality as `stale`.
-2. The Optimization Engine automatically switches to **Degraded Optimization Mode**, holding the last verified safe inverter setpoints.
-3. Automated battery discharge commands are blocked if BESS telemetry age exceeds 60 seconds to prevent deep-discharge violations.
+| Variable | Default Value | Production Requirement | Purpose |
+| :--- | :--- | :--- | :--- |
+| **`ENVIRONMENT`** | `development` | `production` | Enables strict guardrails (rejects weak JWT secrets and wildcard CORS). |
+| **`BACKEND_HOST`** | `0.0.0.0` | `0.0.0.0` | Bind host for the Uvicorn ASGI server. |
+| **`BACKEND_PORT`** | `8000` | Port assigned by orchestrator | Internal service port. |
+| **`DATABASE_URL`** | `sqlite+aiosqlite:///./surya_dev.db` | `postgresql+asyncpg://user:pass@host:5432/surya` | Primary relational connection string. |
+| **`JWT_SECRET_KEY`** | *(Dev placeholder)* | **Must be 32+ cryptographically random chars** | Signs and verifies user authentication tokens. |
+| **`JWT_ACCESS_TOKEN_EXPIRE_MINUTES`** | `120` | `60` to `1440` | Lifetime of generated JWT access tokens. |
+| **`CORS_ORIGINS`** | `http://localhost:5173,...` | Explicit domains (e.g. `https://surya-sim.vercel.app`) | Strict CORS allowlist; wildcard `*` rejected in production. |
+| **`GOOGLE_CLIENT_ID`** | None | Google OAuth Web Client ID | Enables secure "Continue with Google" authentication. |
+| **`TELEMETRY_POLL_INTERVAL_SECONDS`**| `5` | `5` | Cadence for polling physical hardware gateways. |
+| **`TELEMETRY_STALE_AFTER_SECONDS`** | `30` | `30` | Threshold after which readings are flagged `stale`. |
+| **`TELEMETRY_FAILURE_AFTER_SECONDS`**| `60` | `60` | Threshold after which assets are marked `offline`. |
+| **`DECISION_CYCLE_SECONDS`** | `60` | `60` | Cadence of the automated optimization dispatch loop. |
+| **`SCHEDULER_ENABLED`** | `true` | `true` | Enables continuous background optimization cycles. |
+| **`COST_WEIGHT`** | `0.6` | Float [0..1] | Weight assigned to financial cost reduction. |
+| **`CARBON_WEIGHT`** | `0.4` | Float [0..1] | Weight assigned to carbon emissions abatement ($w_{\text{cost}} + w_{\text{carbon}} = 1.0$). |
+| **`GRID_EMISSION_FACTOR_KG_PER_KWH`**| `0.82` | `0.82` | Central Electricity Authority (CEA) carbon factor. |
+| **`BATTERY_MIN_SOC`** | `10.0` | $10.0\%$ | Non-violable battery discharge floor. |
+| **`BATTERY_MAX_SOC`** | `95.0` | $95.0\%$ | Battery over-charge safety ceiling. |
+| **`ALERT_RESERVE_FLOOR_PERCENT`** | `20.0` | $20.0\%$ | Battery energy reserve locked for Tier 1 critical loads. |
+| **`SEED_DEMO_DATA`** | `false` | `true` on demo deployments | Bootstraps Prestige University microgrid profile and accounts. |
 
-### Operator Actions
-1. Inspect the physical network connection and Modbus/MQTT gateway for the reporting substation or inverter.
-2. Verify adapter health logs:
+---
+
+## 2. Deployment Architectures
+
+### 2.1 Docker Compose (Local & Self-Hosted Production)
+Deploys a complete 3-tier stack using [`docker-compose.yml`](../docker-compose.yml):
+- **`postgres`**: PostgreSQL 16 Alpine with `pg_isready` healthcheck probe.
+- **`backend`**: FastAPI backend with non-root security execution and automatic migration execution.
+- **`frontend`**: High-performance Alpine Nginx reverse proxy serving the compiled SPA and proxying API/WebSockets.
+
+```bash
+# Start all containers in background
+docker compose up --build -d
+
+# Check live logs
+docker compose logs -f backend
+
+# Shutdown cleanly
+docker compose down
+```
+
+### 2.2 PaaS Deployment (Render + Vercel)
+- **Backend API on Render (`render.yaml`)**:
+  - Web Service bound to managed PostgreSQL database.
+  - Start command runs `alembic upgrade head` before Uvicorn starts.
+  - Health probe monitored at `/health`.
+- **Frontend SPA on Vercel (`vercel.json`)**:
+  - Edge static deployment with automated monorepo build (`npm run build:simulator && npm run build`).
+  - HTML5 SPA rewrites (`/(.*) -> /index.html`) and 1-year immutable caching on static assets.
+
+---
+
+## 3. Database Schema Migrations (Alembic)
+
+SURYA manages relational schemas using Alembic async migrations (`backend/db/migrations/`).
+
+```bash
+# Check current migration revision
+alembic current
+
+# Apply all pending migrations to latest head
+alembic upgrade head
+
+# Rollback one migration revision
+alembic downgrade -1
+
+# Generate a new auto-detected migration
+alembic revision --autogenerate -m "add_column_name"
+```
+
+---
+
+## 4. Health Checks & Diagnostics
+
+SURYA provides three discrete diagnostic endpoints:
+
+1. **Liveness Probe**:
+   ```bash
+   curl -f http://localhost:8000/health
+   # Response: {"status": "ok", "service": "surya-vpp-backend"}
+   ```
+2. **Readiness Probe**:
+   ```bash
+   curl -f http://localhost:8000/health/ready
+   # Response: {"status": "ready", "database": "connected"}
+   ```
+3. **Optimization Scheduler Health**:
+   ```bash
+   curl -s http://localhost:8000/health/scheduler | jq
+   # Inspects total cycles executed, failures, consecutive errors, and active lock state.
+   ```
+
+---
+
+## 5. Incident Response Runbooks
+
+### Runbook 1: Emergency Stop (E-Stop) Activation & Recovery
+
+#### Symptoms & Triggers:
+- Field transformer fault, utility feeder trip, or battery thermal alarm ($T > 55^\circ\text{C}$).
+- Manual intervention required to protect personnel or physical plant.
+
+#### Procedure:
+1. **Engage E-Stop**:
+   - In the Web Console, click the red **EMERGENCY STOP** button in the header bar or **Settings**.
+   - Enter a mandatory audit reason (e.g. `Physical maintenance on 11kV busbar`).
+   - Confirm engagement.
+   - *Automated system action: Sets `emergency_stop_active=True`, forces `closed_loop_enabled=False`, freezes BESS dispatch to `0.0 kW` (Standby).*
+2. **Resolve On-Site Hazard**:
+   - Verify site equipment is physically safe and cleared.
+3. **De-escalate**:
+   - In the console, click **Clear Emergency Stop** and enter resolution audit notes.
+   - Verify Mission Control readings return to nominal operating parameters.
+
+---
+
+### Runbook 2: Stale Telemetry & Field Adapter Disconnect
+
+#### Symptoms:
+- Overview displays `STALE` or `DISCONNECTED` indicator.
+- Data age exceeds 30 seconds (`is_stale=True`).
+- Asset states tagged `stale` or `missing`.
+
+#### Automated System Behavior:
+1. The optimization scheduler transitions to **Degraded Safe Mode**, holding last verified safe inverter setpoints.
+2. Battery discharge commands are blocked if telemetry age exceeds 60 seconds to prevent unmonitored over-discharge.
+
+#### Operator Recovery Steps:
+1. Inspect physical Modbus TCP / MQTT gateway network connectivity:
+   ```bash
+   ping <gateway_ip>
+   ```
+2. Inspect backend adapter error logs:
    ```bash
    docker logs surya_backend --tail 100 | grep -i "adapter"
    ```
-3. Test connectivity to the physical gateway IP address or serial port.
-4. Once connection is restored, trigger a manual telemetry refresh or force an optimization cycle from the **Scheduler** page in the UI.
+3. Once the physical gateway reconnects, verify telemetry freshness returns to `< 5s`.
 
 ---
 
-## Runbook 2: Inverter / BESS Control Command Execution Failure
+### Runbook 3: Scheduler Stuck / Overlapping Concurrency Lock
 
-### Symptoms
-- Command status shows `rejected`, `timeout`, or `failed` in the Optimizer timeline.
-- Inverter active setpoint does not match requested dispatch level.
-- `BESS Command Timeout` warning alert generated.
+#### Symptoms:
+- Last cycle completed timestamp in `/health/scheduler` is $> 3\text{ minutes}$ old.
+- `consecutive_failures` metric increases.
 
-### Automated System Behavior
-1. The command state machine marks the command as `failed`.
-2. Closed-loop dispatcher prohibits duplicate retries beyond the command's `valid_until` timestamp.
-3. System logs an audit event detailing adapter response code and error reason.
-
-### Operator Actions
-1. Navigate to **Optimizer & Decisions** in the UI and inspect the failed command card.
-2. Check physical inverter alarms on-site or via local web interface (e.g., thermal limit, grid frequency deviation trip).
-3. If hardware condition is nominal, acknowledge the failed command and issue a **Force Cycle** to generate a refreshed setpoint.
-
----
-
-## Runbook 3: Emergency Stop (E-Stop) Activation & De-escalation
-
-### Indications for E-Stop Engagement
-- Physical grid fault, transformer fire, or utility line work without scheduled isolation.
-- Severe battery thermal excursion ($T_{\text{cell}} > 55^\circ\text{C}$).
-- Unsanctioned reverse power flow tripping utility breakers.
-
-### Activation Procedure
-1. Click the red **EMERGENCY STOP** button in the top navigation bar or **Settings** page.
-2. Enter a mandatory audit justification (e.g., `Emergency maintenance on 11kV transformer feeder block A`).
-3. Confirm action in the modal dialog.
-
-### System Response
-- `emergency_stop_active` flag set to `true`.
-- `closed_loop_enabled` immediately forced to `false`.
-- All automated BESS discharge setpoints set to `0.0 kW` (Standby mode).
-- Critical high-priority audit event persisted with operator identity and timestamp.
-
-### De-escalation Procedure
-1. Verify all physical site hazards are resolved and equipment is safe to energize.
-2. In the UI, click **Clear Emergency Stop** and enter post-incident resolution notes.
-3. Verify telemetry readings in **Mission Control** are live and within safe nominal ranges.
-
----
-
-## Runbook 4: Scheduler Daemon Recovery & Worker Hangs
-
-### Symptoms
-- Last Cycle Timestamp in **Scheduler** is more than 3 minutes old.
-- Health endpoint `/health/scheduler` returns degraded status or consecutive failures $> 3$.
-
-### Recovery Steps
-1. Query system health:
+#### Recovery Steps:
+1. Inspect scheduler diagnostic endpoint:
    ```bash
    curl -s http://localhost:8000/health/scheduler | jq
    ```
-2. If scheduler lock is stuck, restart backend container:
+2. If `lock_held` is true and cycle has hung on external I/O:
    ```bash
    docker compose restart backend
    ```
-3. Verify clean startup and DB connection:
+3. Verify clean startup and scheduler cycle resumption in logs:
    ```bash
-   docker logs surya_backend --tail 50
+   docker logs surya_backend --tail 50 | grep -i "scheduler"
    ```
 
 ---
 
-## Runbook 5: Database Backup, Restore, and Schema Migrations
+### Runbook 4: Database Backup & Point-in-Time Restore
 
-### Automated Database Backup
+#### Create Database Backup:
 ```bash
-docker exec -t surya_postgres pg_dump -U surya_user -d surya_db -F c -b -v -f /var/lib/postgresql/data/surya_backup_$(date +%Y%m%d_%H%M%S).dump
+docker exec -t surya_postgres pg_dump -U surya_user -d surya_db -F c -b -v -f /var/lib/postgresql/data/surya_backup.dump
 ```
 
-### Database Restore
+#### Restore Database from Backup:
 ```bash
-docker exec -i surya_postgres pg_restore -U surya_user -d surya_db -c -v /var/lib/postgresql/data/surya_backup_TARGET.dump
-```
+# 1. Stop backend service to drop active connections
+docker compose stop backend
 
-### Applying Schema Migrations
-```bash
-docker exec -it surya_backend alembic upgrade head
+# 2. Restore schema and data
+docker exec -t surya_postgres pg_restore -U surya_user -d surya_db -v -c /var/lib/postgresql/data/surya_backup.dump
+
+# 3. Restart backend service
+docker compose start backend
 ```
