@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLiveTwin } from '../hooks/useLiveTwin';
 import { AssetRead, AssetType } from '../types';
 import { BuildingCard } from '../components/BuildingCard';
@@ -28,6 +28,27 @@ export const DigitalTwin: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [simulatorFullscreen, setSimulatorFullscreen] = useState(false);
+  const simulatorRef = useRef<HTMLDivElement>(null);
+
+  // Real browser full screen: only the simulator is visible, with no navbar, page or browser chrome.
+  useEffect(() => {
+    const sync = () => setSimulatorFullscreen(document.fullscreenElement === simulatorRef.current);
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+
+  const toggleSimulatorFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+    try {
+      await simulatorRef.current?.requestFullscreen();
+    } catch {
+      // Full Screen API unavailable: cover the window instead.
+      setSimulatorFullscreen((value) => !value);
+    }
+  };
 
   const buildingAssets = assets.filter((a) => a.asset_type === 'building');
 
@@ -100,49 +121,62 @@ export const DigitalTwin: React.FC = () => {
 
       {/* 3D Campus Simulator */}
       <div
+        ref={simulatorRef}
         className={
           simulatorFullscreen
-            ? 'fixed inset-0 z-[60] flex flex-col bg-slate-950'
+            ? 'fixed inset-0 z-[100] bg-black'
             : 'overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 shadow-xl'
         }
       >
-        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-700 bg-slate-800">
-              <Box className="h-4 w-4 text-emerald-400" />
+        {!simulatorFullscreen && (
+          <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-700 bg-slate-800">
+                <Box className="h-4 w-4 text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-white">3D Campus Simulator</h2>
+                <p className="text-[11px] text-slate-400">
+                  Prestige University, Indore • drag to orbit, scroll to zoom, use the top bar to jump to buildings
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">3D Campus Simulator</h2>
-              <p className="text-[11px] text-slate-400">
-                Prestige University, Indore • drag to orbit, scroll to zoom, use the top bar to jump to buildings
-              </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={SIMULATOR_URL.replace('embed=1', 'embed=0')}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">New Tab</span>
+              </a>
+              <button
+                onClick={toggleSimulatorFullscreen}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Full Screen</span>
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={SIMULATOR_URL.replace('embed=1', 'embed=0')}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">New Tab</span>
-            </a>
-            <button
-              onClick={() => setSimulatorFullscreen((value) => !value)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
-            >
-              {simulatorFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{simulatorFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
-            </button>
-          </div>
-        </div>
+        )}
         <iframe
           title="Prestige University 3D campus simulator"
           src={SIMULATOR_URL}
-          className={simulatorFullscreen ? 'w-full flex-1 border-0' : 'h-[75vh] min-h-[560px] w-full border-0'}
+          className={simulatorFullscreen ? 'block h-full w-full border-0' : 'block h-[75vh] min-h-[560px] w-full border-0'}
           allow="fullscreen"
         />
+        {simulatorFullscreen && (
+          <button
+            onClick={toggleSimulatorFullscreen}
+            title="Exit full screen (Esc)"
+            aria-label="Exit full screen"
+            className="absolute bottom-4 right-4 flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-slate-950/60 text-slate-200 opacity-60 backdrop-blur-md transition-opacity hover:opacity-100"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Buildings Criticality Tiers Section */}
