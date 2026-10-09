@@ -2,7 +2,8 @@ import { demoBackend } from './demo';
 import type { ControlPolicy, CycleSummary, Decision, DecisionStats, LiveTwin, Session, Snapshot, User } from './types';
 
 const SITE_ID = 1;
-const TIMEOUT_MS = 8000;
+// Long enough for a sleeping Render free instance to wake up (~50 s).
+const TIMEOUT_MS = 60000;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -47,7 +48,7 @@ async function request<T>(serverUrl: string, path: string, init: RequestInit & {
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if ((error as Error).name === 'AbortError') throw new ApiError('The server took too long to respond.', 0);
-    throw new ApiError('Cannot reach the SURYA server. Check the address and that your phone is on the same Wi-Fi.', 0);
+    throw new ApiError('Cannot reach the SURYA server. Check the address and your internet connection.', 0);
   } finally {
     clearTimeout(timer);
   }
