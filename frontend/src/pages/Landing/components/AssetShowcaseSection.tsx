@@ -88,7 +88,7 @@ export const AssetShowcaseSection: React.FC = () => {
   ];
 
   return (
-    <section id="assets-showcase" className="relative bg-slate-950 py-24 sm:py-32 overflow-hidden">
+    <section id="assets-showcase" className="relative bg-heritage-page py-24 sm:py-32 overflow-hidden">
       {/* Dynamic Ambient Background Glows */}
       <div className="absolute top-1/3 left-1/4 h-[500px] w-[500px] rounded-full bg-amber-500/10 blur-[180px] pointer-events-none" />
       <div className="absolute bottom-1/3 right-1/4 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-[180px] pointer-events-none" />
@@ -96,8 +96,8 @@ export const AssetShowcaseSection: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="gsap-reveal inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-300 mb-4 backdrop-blur-md shadow-lg shadow-amber-500/10">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <div className="gsap-reveal heritage-badge mb-4 backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 text-heritage-accent" />
             <span>AUTHENTIC HARDWARE DEPLOYMENT</span>
           </div>
 
@@ -117,10 +117,10 @@ export const AssetShowcaseSection: React.FC = () => {
             <div
               key={asset.id}
               data-anim="card"
-              className="gsap-reveal group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-md transition-all duration-500 hover:border-slate-700 hover:shadow-2xl hover:shadow-amber-500/10 flex flex-col justify-between"
+              className="gsap-reveal group relative overflow-hidden heritage-main-card flex flex-col justify-between"
             >
               {/* Image Preview Container with Zoom Effect */}
-              <div data-anim="card-img-wrap" className="relative h-64 sm:h-80 w-full overflow-hidden bg-slate-950">
+              <div data-anim="card-img-wrap" className="relative h-64 sm:h-80 w-full overflow-hidden heritage-img-fallback">
                 <img
                   data-anim="card-img"
                   src={asset.image}
@@ -130,13 +130,11 @@ export const AssetShowcaseSection: React.FC = () => {
                 />
 
                 {/* Gradient Scrims for text contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-[var(--card-bg)]/30 to-transparent" />
 
                 {/* Floating Category Pill */}
                 <div className="absolute top-4 left-4 z-10">
-                  <span
-                    className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border backdrop-blur-md ${asset.categoryColor}`}
-                  >
+                  <span className="heritage-badge">
                     <span>{asset.category}</span>
                   </span>
                 </div>
@@ -144,7 +142,7 @@ export const AssetShowcaseSection: React.FC = () => {
                 {/* Inspect Button Icon */}
                 <button
                   onClick={() => setSelectedAsset(asset)}
-                  className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-slate-300 backdrop-blur-md transition-all duration-300 hover:border-amber-400 hover:text-amber-300 hover:scale-110 active:scale-95"
+                  className="absolute top-4 right-4 z-10 heritage-btn-secondary !p-0 flex h-9 w-9 items-center justify-center !rounded-full shadow-md"
                   aria-label={`Inspect ${asset.title}`}
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -152,10 +150,10 @@ export const AssetShowcaseSection: React.FC = () => {
 
                 {/* Bottom title inside image */}
                 <div className="absolute bottom-4 left-4 right-4 z-10">
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-md">
+                  <h3 className="font-display text-xl sm:text-2xl font-bold text-black tracking-tight">
                     {asset.title}
                   </h3>
-                  <p className="text-xs sm:text-sm font-medium text-amber-300/90 font-mono mt-0.5">
+                  <p className="text-xs sm:text-sm font-semibold text-black/80 font-mono mt-0.5">
                     {asset.subtitle}
                   </p>
                 </div>
@@ -163,21 +161,21 @@ export const AssetShowcaseSection: React.FC = () => {
 
               {/* Card Body & Specs */}
               <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between space-y-6">
-                <p className="text-sm text-slate-300 leading-relaxed font-sans">
+                <p className="heritage-body text-sm leading-relaxed">
                   {asset.summary}
                 </p>
 
                 {/* 2x2 Technical Specifications Grid */}
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800/80">
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t heritage-divider">
                   {asset.specs.map((spec, i) => (
                     <div
                       key={i}
-                      className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-3 flex flex-col justify-center"
+                      className="heritage-inner-card !p-3 flex flex-col justify-center"
                     >
-                      <span className="text-[10px] uppercase font-semibold text-slate-400 font-sans">
+                      <span className="text-[10px] uppercase font-semibold text-heritage-text-secondary font-sans">
                         {spec.label}
                       </span>
-                      <span className="text-xs sm:text-sm font-bold text-slate-100 font-mono mt-0.5">
+                      <span className="text-xs sm:text-sm font-bold text-heritage-text-primary font-mono mt-0.5">
                         {spec.value}
                       </span>
                     </div>
@@ -187,7 +185,7 @@ export const AssetShowcaseSection: React.FC = () => {
                 {/* Action Trigger */}
                 <button
                   onClick={() => setSelectedAsset(asset)}
-                  className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 text-xs font-bold text-slate-200 hover:border-amber-500/40 hover:text-amber-300 hover:bg-slate-900 transition-all font-sans"
+                  className="heritage-btn-secondary w-full py-2.5 text-xs font-bold font-sans"
                 >
                   <span>Inspect Hardware Details</span>
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -201,58 +199,56 @@ export const AssetShowcaseSection: React.FC = () => {
       {/* Detail Inspection Modal */}
       {selectedAsset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeSlideUp">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-amber-500/40 bg-slate-900 p-6 sm:p-8 shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto heritage-main-card p-6 sm:p-8 shadow-2xl">
             {/* Close Button */}
             <button
               onClick={() => setSelectedAsset(null)}
-              className="absolute top-6 right-6 flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-white transition-colors"
+              className="absolute top-6 right-6 heritage-btn-secondary !p-0 flex h-9 w-9 items-center justify-center !rounded-full shadow-md z-20"
             >
               <X className="h-5 w-5" />
             </button>
 
             {/* Modal Image */}
-            <div className="relative h-64 sm:h-96 w-full rounded-2xl overflow-hidden mb-6 border border-slate-800">
+            <div className="relative h-64 sm:h-96 w-full rounded-2xl overflow-hidden mb-6 border border-[var(--border-tan)] heritage-img-fallback">
               <img
                 src={selectedAsset.image}
                 alt={selectedAsset.title}
                 className="h-full w-full object-cover object-center"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4">
-                <span
-                  className={`inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border backdrop-blur-md mb-2 ${selectedAsset.categoryColor}`}
-                >
+                <span className="heritage-badge mb-2">
                   {selectedAsset.category}
                 </span>
-                <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
+                <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-black">
                   {selectedAsset.title}
                 </h3>
               </div>
             </div>
 
             {/* Modal Body */}
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans mb-6">
+            <p className="heritage-body text-sm sm:text-base leading-relaxed mb-6">
               {selectedAsset.summary}
             </p>
 
             {/* Specifications Matrix */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {selectedAsset.specs.map((spec, idx) => (
-                <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/80 p-4">
-                  <div className="text-xs font-semibold text-slate-400 uppercase font-sans">
+                <div key={idx} className="heritage-inner-card p-4">
+                  <div className="text-xs font-semibold text-heritage-text-secondary uppercase font-sans">
                     {spec.label}
                   </div>
-                  <div className="text-base font-bold text-amber-300 font-mono mt-1">
+                  <div className="text-base font-bold text-heritage-accent font-mono mt-1">
                     {spec.value}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 pt-4 border-t border-slate-800 flex justify-end">
+            <div className="mt-8 pt-4 border-t heritage-divider flex justify-end">
               <button
                 onClick={() => setSelectedAsset(null)}
-                className="px-6 py-2.5 rounded-full border border-slate-700 bg-slate-800 text-xs font-semibold text-white hover:bg-slate-700 transition-colors"
+                className="heritage-btn-secondary px-6 py-2.5 text-xs font-semibold"
               >
                 Close Inspector
               </button>

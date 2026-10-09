@@ -66,12 +66,12 @@ export const TrustSection: React.FC = () => {
   ];
 
   return (
-    <section id="trust-section" className="relative bg-slate-950 py-24 sm:py-32 overflow-hidden">
+    <section id="trust-section" className="relative bg-heritage-page py-24 sm:py-32 overflow-hidden">
       <div className="section-divider section-divider-top" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="gsap-reveal inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-semibold text-amber-300 mb-4 backdrop-blur-md">
+          <div className="gsap-reveal heritage-badge mb-4 backdrop-blur-md">
             <Lock className="h-3.5 w-3.5" />
             <span>OPERATIONAL TRUST & AUDIT INTEGRITY</span>
           </div>
@@ -91,29 +91,29 @@ export const TrustSection: React.FC = () => {
               <div
                 key={pillar.id}
                 data-anim="card"
-                className="gsap-reveal rounded-2xl border border-slate-800 bg-slate-900/30 p-6 sm:p-8 backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:bg-slate-900/50 flex flex-col justify-between"
+                className="gsap-reveal heritage-main-card p-6 sm:p-8 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-800 bg-slate-950/80 text-amber-400">
+                    <div className="heritage-inner-card !p-0 flex h-12 w-12 items-center justify-center text-heritage-accent">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${pillar.badgeColor}`}>
+                    <span className="heritage-badge">
                       {pillar.badge}
                     </span>
                   </div>
 
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  <h3 className="heritage-heading text-xl sm:text-2xl font-bold tracking-tight">
                     {pillar.title}
                   </h3>
-                  <p className="mt-3 text-sm text-slate-400 leading-relaxed font-sans">
+                  <p className="heritage-body mt-3 text-sm leading-relaxed">
                     {pillar.description}
                   </p>
 
-                  <div className="mt-6 pt-6 border-t border-slate-800/80 space-y-2.5">
+                  <div className="mt-6 pt-6 border-t heritage-divider space-y-2.5">
                     {pillar.highlights.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                        <Check className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div key={idx} className="flex items-start gap-2.5 text-xs text-heritage-text-secondary">
+                        <Check className="h-4 w-4 text-heritage-accent shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </div>
                     ))}

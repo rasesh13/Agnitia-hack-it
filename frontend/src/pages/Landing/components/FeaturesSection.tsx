@@ -70,12 +70,12 @@ export const FeaturesSection: React.FC = () => {
   ];
 
   return (
-    <section id="features-section" className="relative bg-slate-950 py-24 sm:py-32 overflow-hidden">
+    <section id="features-section" className="relative bg-heritage-page py-24 sm:py-32 overflow-hidden">
       <div className="section-divider section-divider-top" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="gsap-reveal inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-400 mb-4 backdrop-blur-md">
+          <div className="gsap-reveal heritage-badge mb-4 backdrop-blur-md">
             <span>CORE ARCHITECTURE</span>
           </div>
           <h2 data-anim="split-heading" className="gsap-reveal font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
@@ -94,40 +94,40 @@ export const FeaturesSection: React.FC = () => {
               <div
                 key={feat.id}
                 data-anim="feature-card"
-                className="gsap-reveal rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:bg-slate-900/60 flex flex-col justify-between"
+                className="gsap-reveal heritage-main-card p-6 sm:p-8 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-800 bg-slate-950/80 text-amber-400">
+                    <div className="heritage-inner-card !p-0 flex h-12 w-12 items-center justify-center text-heritage-accent">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <span className={`text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${feat.tagColor}`}>
+                    <span className="heritage-badge">
                       {feat.tag}
                     </span>
                   </div>
 
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  <h3 className="heritage-heading text-xl sm:text-2xl font-bold tracking-tight">
                     {feat.title}
                   </h3>
-                  <p className="mt-3 text-sm text-slate-400 leading-relaxed font-sans">
+                  <p className="heritage-body mt-3 text-sm leading-relaxed">
                     {feat.description}
                   </p>
 
-                  <div className="mt-6 pt-6 border-t border-slate-800/80 space-y-2.5">
+                  <div className="mt-6 pt-6 border-t heritage-divider space-y-2.5">
                     {feat.specs.map((spec, i) => (
-                      <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <div key={i} className="flex items-center gap-2.5 text-xs text-heritage-text-secondary">
+                        <CheckCircle2 className="h-4 w-4 text-heritage-accent shrink-0" />
                         <span>{spec}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800/50 flex items-center justify-between">
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">
+                <div className="mt-6 pt-4 border-t heritage-divider flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-heritage-text-secondary">
                     Target Metric
                   </span>
-                  <span className="text-xs font-bold text-amber-300 font-mono">
+                  <span className="heritage-chip font-bold text-heritage-accent font-mono">
                     {feat.metric}
                   </span>
                 </div>
