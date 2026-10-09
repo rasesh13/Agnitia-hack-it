@@ -57,7 +57,7 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
             cy="50"
             r="42"
             fill="transparent"
-            stroke="#1e293b"
+            stroke="#e9dfcc"
             strokeWidth="10"
           />
           <circle
