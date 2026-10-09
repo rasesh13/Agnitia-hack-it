@@ -1,6 +1,5 @@
 from typing import Annotated
 
-import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +21,7 @@ from backend.services.auth_crypto import (
     hash_password,
     verify_password,
 )
+from backend.services.google_identity import GoogleTokenError, verify_google_id_token_async
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -162,15 +162,8 @@ async def google_auth(
         )
 
     try:
-        unverified_claims = jwt.decode(payload.id_token, options={"verify_signature": False})
-        aud = unverified_claims.get("aud")
-        if aud != settings.GOOGLE_CLIENT_ID:
-            raise ValueError("Token audience does not match GOOGLE_CLIENT_ID")
-        email = unverified_claims.get("email")
-        google_sub = unverified_claims.get("sub")
-        if not email or not google_sub:
-            raise ValueError("Missing email or sub in Google token")
-    except Exception as err:
+        identity = await verify_google_id_token_async(payload.id_token, settings.GOOGLE_CLIENT_ID)
+    except GoogleTokenError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -179,6 +172,8 @@ async def google_auth(
             },
         ) from err
 
+    email = identity.email
+    google_sub = identity.sub
     user_repo = UserRepository(session)
     user = await user_repo.get_by_google_sub(google_sub)
     if user is None:
