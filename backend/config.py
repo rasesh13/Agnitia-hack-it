@@ -143,6 +143,16 @@ class Settings(BaseSettings):
         365, gt=0, description="Retention duration for decision audit trail"
     )
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def use_async_postgres_driver(cls, v: str) -> str:
+        # Hosting providers (e.g. Render) hand out postgres:// URLs; SQLAlchemy async needs asyncpg.
+        if isinstance(v, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if v.startswith(prefix):
+                    return "postgresql+asyncpg://" + v[len(prefix):]
+        return v
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
