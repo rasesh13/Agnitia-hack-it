@@ -1,23 +1,68 @@
 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="background" x1="10" y1="5" x2="39" y2="43" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#173D2B"/>
-      <stop offset="1" stop-color="#07120E"/>
+    <linearGradient id="tile" x1="6" y1="2" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12302A"/>
+      <stop offset="0.55" stop-color="#0A1A1C"/>
+      <stop offset="1" stop-color="#050A12"/>
     </linearGradient>
-    <linearGradient id="leaf" x1="13" y1="37" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0F9F6E"/>
-      <stop offset="1" stop-color="#58D68D"/>
-    </linearGradient>
-    <linearGradient id="sun" x1="23" y1="11" x2="34" y2="22" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE08A"/>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(24 22) scale(19)">
+      <stop stop-color="#FBBF24" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ray" x1="24" y1="5" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A"/>
       <stop offset="1" stop-color="#F59E0B"/>
     </linearGradient>
+    <radialGradient id="disc" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.5 19.5) scale(10.5)">
+      <stop stop-color="#FFF3B0"/>
+      <stop offset="0.45" stop-color="#FCD34D"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </radialGradient>
+    <linearGradient id="earth" x1="6" y1="33" x2="42" y2="33" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#059669"/>
+      <stop offset="0.55" stop-color="#10B981"/>
+      <stop offset="1" stop-color="#A3E635"/>
+    </linearGradient>
+    <clipPath id="tileClip">
+      <rect x="1" y="1" width="46" height="46" rx="12"/>
+    </clipPath>
   </defs>
-  <circle cx="24" cy="24" r="22" fill="url(#background)"/>
-  <circle cx="24" cy="24" r="21.25" stroke="#F6B84B" stroke-opacity=".38" stroke-width="1.5"/>
-  <path d="M29 8.5V11M20.6 11.2 22.4 13M35.6 11.2 33.8 13M18.5 18.5H21M37 18.5h2.5" stroke="#FFD56A" stroke-width="1.8" stroke-linecap="round"/>
-  <circle cx="29" cy="18.5" r="5.5" fill="url(#sun)"/>
-  <path d="M9.5 33.7c5.9-7.8 14.9-11.5 29-10.3-1.4 9.8-8.1 16-17.7 16-4.6 0-8.4-2-11.3-5.7Z" fill="url(#leaf)"/>
-  <path d="M11.6 37.4c6.1-5.9 13.3-9.7 23.2-12" stroke="#F4F1D0" stroke-width="2.35" stroke-linecap="round"/>
-  <path d="m19.2 31.5-1.2 4.3M25.2 28.6l1.5 3.4" stroke="#D9FBE7" stroke-width="1.35" stroke-linecap="round"/>
+
+  <!-- Tile -->
+  <rect x="1" y="1" width="46" height="46" rx="12" fill="url(#tile)"/>
+  <g clip-path="url(#tileClip)">
+    <circle cx="24" cy="22" r="19" fill="url(#halo)"/>
+
+    <!-- Twelve chakra rays, long and short alternating -->
+    <g fill="url(#ray)">
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(30 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1" transform="rotate(60 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(90 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1" transform="rotate(120 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(150 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1" transform="rotate(180 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(210 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1" transform="rotate(240 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(270 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="5.4" rx="1.1" transform="rotate(300 24 22)"/>
+      <rect x="22.9" y="5.6" width="2.2" height="4" rx="1.1" transform="rotate(330 24 22)"/>
+    </g>
+
+    <!-- Sun disc with an energy bolt cut through it -->
+    <circle cx="24" cy="22" r="8.6" fill="url(#disc)"/>
+    <path d="M25.6 15.6L20.4 23.1H23.7L22.4 28.4L27.7 20.7H24.3L25.6 15.6Z" fill="#0B1D1B"/>
+
+    <!-- Emerald horizon: the green microgrid the sun rises over -->
+    <path d="M3 32.5C11.5 28.4 18.6 27.6 25.4 28.6C32.8 29.7 38.8 32.3 45 31.2V47H3V32.5Z" fill="#050A12"/>
+    <path d="M3 33.2C11.5 29.1 18.6 28.3 25.4 29.3C32.8 30.4 38.8 33 45 31.9" stroke="url(#earth)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Solar panel field in perspective -->
+    <g stroke="#10B981" stroke-opacity="0.5" stroke-width="0.9" stroke-linecap="round">
+      <path d="M13.5 36H34.5M11 40H37M8.5 44H39.5"/>
+      <path d="M13.5 36L8.5 44M18.75 36L16.25 44M24 36V44M29.25 36L31.75 44M34.5 36L39.5 44"/>
+    </g>
+  </g>
+
+  <!-- Fine rim -->
+  <rect x="1.5" y="1.5" width="45" height="45" rx="11.5" stroke="#FBBF24" stroke-opacity="0.28"/>
 </svg>
