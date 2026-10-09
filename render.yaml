@@ -33,6 +33,6 @@ services:
       # Loads the Prestige University demo microgrid and demo accounts on first start.
       - key: SEED_DEMO_DATA
         value: "true"
-      # Google OAuth web client ID for "Continue with Google"; set in the dashboard.
+      # Google OAuth web client ID for "Continue with Google"
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        value: 1088725968567-c81u2bpt7f80j6f6bke45s95n73j4d1s.apps.googleusercontent.com
