@@ -65,24 +65,24 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       {/* Header */}
       <div className="relative flex items-start justify-between gap-3">
-        <span className="pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">{title}</span>
-        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border ${iconBg} shadow-[0_0_20px_-6px_rgba(var(--accent),0.6)]`}>
-          <Icon className={`h-[18px] w-[18px] ${iconColor}`} />
+        <span className="pt-1 text-sm font-semibold uppercase tracking-[0.06em] text-slate-300">{title}</span>
+        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border ${iconBg} shadow-[0_0_20px_-6px_rgba(var(--accent),0.6)]`}>
+          <Icon className={`h-6 w-6 ${iconColor}`} />
         </div>
       </div>
 
       {/* Main Value */}
-      <div className="relative mt-3 flex items-baseline gap-1.5">
-        <span className="font-display text-[28px] font-bold leading-none tracking-tight text-white tabular-nums">{value}</span>
-        {unit && <span className="text-xs font-semibold text-slate-400">{unit}</span>}
+      <div className="relative mt-4 flex items-baseline gap-2">
+        <span className="font-display text-[2.75rem] font-bold leading-none tracking-tight text-white tabular-nums">{value}</span>
+        {unit && <span className="text-lg font-semibold text-slate-300">{unit}</span>}
       </div>
 
       {/* Footer / Trend */}
       {(subtitle || trend || badge) && (
         <div className="relative mt-4 flex items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
-          {subtitle && <span className="truncate text-xs text-slate-400">{subtitle}</span>}
+          {subtitle && <span className="truncate text-sm text-slate-300">{subtitle}</span>}
           {trend && (
-            <span className={`text-xs font-medium ${trend.isPositive ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <span className={`text-sm font-semibold ${trend.isPositive ? 'text-emerald-400' : 'text-amber-400'}`}>
               {trend.value} {trend.label}
             </span>
           )}
