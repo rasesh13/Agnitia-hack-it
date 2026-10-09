@@ -1,0 +1,30 @@
+%% Authentication flows (backend/api/routes_auth.py, frontend/src/context/AuthContext.tsx)
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant FE as Web console
+    participant G as Google Identity Services
+    participant API as FastAPI /api/v1/auth
+    participant DB as users table
+
+    alt Email + password
+        U->>FE: email, password
+        FE->>API: POST /login {email, password}
+        API->>API: rate limit 15/min/IP
+        API->>DB: SELECT user by lower(email)
+        API->>API: Argon2id verify
+        API-->>FE: {access_token, expires_in, user}
+    else Google
+        U->>G: choose account (GSI button)
+        G-->>FE: ID token (credential)
+        FE->>API: POST /google {id_token}
+        API->>G: fetch JWKS (cached), verify RS256, aud, iss, email_verified
+        API->>DB: find by google_sub, else by email, else create (operator)
+        API-->>FE: {access_token, expires_in, user}
+    end
+    FE->>FE: localStorage surya_token / surya_user
+    FE->>API: later requests with Authorization: Bearer
+    FE->>API: WebSocket /ws?token=...
+    U->>FE: Sign out
+    FE->>FE: clear localStorage (no server call)
+    Note over API,DB: POST /logout (used by no client) increments token_version,<br/>revoking every token for that user
