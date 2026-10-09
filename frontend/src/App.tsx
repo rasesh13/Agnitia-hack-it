@@ -154,22 +154,22 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
   return (
     <div className="surya-console flex min-h-screen flex-col bg-slate-950 text-slate-100">
       {/* Ambient glow behind the header */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.10),transparent_60%)]" />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-72 bg-[radial-gradient(ellipse_at_top_right,rgba(230,211,168,0.55),transparent_60%)]" />
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b border-[#7a5a3a]/10 bg-[#f3eadb]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[4.5rem] max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo & Platform Title */}
           <div className="flex items-center gap-3">
             <SuryaMark size={38} className="drop-shadow-[0_0_14px_rgba(245,158,11,0.35)]" />
             <div className="leading-tight">
-              <div className="font-display text-base font-bold tracking-tight text-white">SURYA</div>
-              <div className="hidden text-[11px] font-medium text-emerald-400/90 sm:block">Operations Platform</div>
+              <div className="font-display text-lg font-bold tracking-tight text-white">SURYA</div>
+              <div className="hidden text-[11px] font-medium text-slate-400 sm:block">Operations Platform</div>
             </div>
           </div>
 
           {/* Active site */}
-          <div className="hidden items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs lg:flex">
+          <div className="hidden items-center gap-2.5 rounded-full bg-[#e8dcc4] px-4 py-1.5 text-sm xl:flex">
             <span className="relative flex h-2 w-2">
               {connectionStatus === 'connected' && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
               <span className={`relative inline-flex h-2 w-2 rounded-full ${status.dot}`} />
@@ -181,12 +181,12 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
 
           {/* Status, clock, alerts, user */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold sm:flex ${status.pill}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+            <div className={`hidden items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-bold sm:flex ${status.pill}`}>
+              <span className={`h-2 w-2 rounded-full ${status.dot}`} />
               {statusLabel}
             </div>
-            <div className="hidden items-center gap-1.5 text-xs font-medium tabular-nums text-slate-400 md:flex">
-              <Clock className="h-3.5 w-3.5 text-slate-500" />
+            <div className="hidden items-center gap-1.5 text-base font-semibold tabular-nums text-slate-200 md:flex">
+              <Clock className="h-4 w-4 text-slate-400" />
               {clock} IST
             </div>
             <button
@@ -194,14 +194,14 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
               className="relative rounded-xl p-2 text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
               aria-label={`Alerts${alertCount ? ` (${alertCount} active)` : ''}`}
             >
-              <Bell className="h-[18px] w-[18px]" />
+              <Bell className="h-5 w-5" />
               {alertCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-950" />}
             </button>
 
             <div className="relative z-50" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((value) => !value)}
-                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
+                className="flex items-center gap-2 rounded-full bg-[#e8dcc4] py-1 pl-1 pr-2.5 transition-colors hover:bg-[#dccdb2]"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
@@ -273,13 +273,13 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
         {/* Navigation Tabs */}
         <div className="mx-auto max-w-[1600px] px-4 pb-3 sm:px-6 lg:px-8">
           <div className="relative">
-            {navFade.left && <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 rounded-l-2xl bg-gradient-to-r from-slate-950 to-transparent" />}
-            {navFade.right && <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 rounded-r-2xl bg-gradient-to-l from-slate-950 to-transparent" />}
+            {navFade.left && <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 rounded-l-full bg-gradient-to-r from-[#e8dcc4] to-transparent" />}
+            {navFade.right && <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 rounded-r-full bg-gradient-to-l from-[#e8dcc4] to-transparent" />}
             <nav
               ref={navRef}
               onScroll={updateNavFade}
               aria-label="Main navigation"
-              className="surya-tabs flex gap-1 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1"
+              className="surya-tabs flex gap-1 overflow-x-auto rounded-full bg-[#e8dcc4] p-1.5"
             >
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -290,28 +290,26 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
                     key={item.id}
                     onClick={() => selectTab(item.id)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`group relative flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-[12.5px] font-semibold transition-all duration-200 ${
+                    className={`group relative flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-[0.875rem] font-semibold transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-b from-emerald-500/20 to-emerald-500/5 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.35),0_8px_24px_-12px_rgba(16,185,129,0.6)]'
-                        : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100'
+                        ? 'bg-[#0b1220] text-[#fdfbf7] shadow-[0_8px_20px_-10px_rgba(11,18,32,0.7)]'
+                        : 'text-slate-300 hover:bg-[#fdfbf7]/70 hover:text-white'
                     }`}
                   >
-                    <Icon className={`h-4 w-4 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    <Icon className={`h-[1.125rem] w-[1.125rem] flex-shrink-0 transition-colors ${isActive ? 'text-[#fdfbf7]' : 'text-slate-400 group-hover:text-slate-200'}`} />
                     {item.label}
                     {badge !== null && (
                       <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                         {badge > 99 ? '99+' : badge}
                       </span>
                     )}
-                    {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />}
-                  </button>
+                                      </button>
                 );
               })}
             </nav>
           </div>
         </div>
-        <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
-      </header>
+              </header>
 
       {/* Connection / Staleness Banner */}
       <ConnectionBanner />
