@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.api.deps import get_current_user
-from backend.db.database import get_db
+from backend.db.database import get_db, get_session_maker
 from backend.db.repositories.twin_repo import TwinRepository
 from backend.models.base import utc_now
 from backend.models.config import BuildingConfig
@@ -16,6 +16,7 @@ from backend.models.digital_twin import Asset, AssetType
 from backend.models.telemetry import TelemetryPoint
 from backend.models.user import User
 from backend.services.digital_twin_store import CampusAggregate, DigitalTwinStore
+from backend.services.ml_microgrid_sync import ml_sync_service
 
 router = APIRouter(prefix="/api/v1", tags=["digital-twin"])
 
@@ -362,3 +363,82 @@ async def get_telemetry_series(
         count=len(points),
         points=points,
     )
+
+
+@router.post("/twin/reset-to-zero")
+async def reset_twin_to_zero(
+    site_id: int = Query(1, description="Site ID"),
+    session: AsyncSession = Depends(get_db),
+):
+    """Resets all live asset active power and telemetry to 0.0 kW (Pre-ML baseline)."""
+    return await ml_sync_service.reset_to_zero(session=session, site_id=site_id)
+
+
+@router.post("/twin/apply-ml-prediction")
+async def apply_twin_ml_prediction(
+    site_id: int = Query(1, description="Site ID"),
+    region_id: str = Query("central_india_mp_indore"),
+    simulate_daylight_peak: bool = Query(True),
+    session: AsyncSession = Depends(get_db),
+):
+    """Executes LightGBM ML models and updates digital twin assets with real-life predictions."""
+    return await ml_sync_service.apply_ml_prediction(
+        session=session,
+        site_id=site_id,
+        region_id=region_id,
+        simulate_daylight_peak=simulate_daylight_peak,
+    )
+
+
+@router.get("/twin/ml-comparison")
+async def get_twin_ml_comparison(
+    site_id: int = Query(1, description="Site ID"),
+    region_id: str = Query("central_india_mp_indore"),
+    session: AsyncSession = Depends(get_db),
+):
+    """Returns side-by-side comparison matrix of Zero Baseline vs ML Real-Life Model Predictions."""
+    return await ml_sync_service.get_comparison_summary(
+        session=session, site_id=site_id, region_id=region_id
+    )
+
+
+@router.post("/twin/fluctuate-step")
+async def step_twin_fluctuation(
+    site_id: int = Query(1, description="Site ID"),
+    region_id: str = Query("central_india_mp_indore"),
+    session: AsyncSession = Depends(get_db),
+):
+    """Executes a real-time stochastic fluctuation step sampled from the ML model distribution."""
+    return await ml_sync_service.generate_live_fluctuation_step(
+        session=session, site_id=site_id, region_id=region_id
+    )
+
+
+@router.post("/twin/fluctuate-stream/start")
+async def start_twin_fluctuation_stream(
+    site_id: int = Query(1, description="Site ID"),
+    interval_seconds: float = Query(2.0, description="Interval in seconds"),
+    region_id: str = Query("central_india_mp_indore"),
+):
+    """Starts continuous background fluctuation streaming."""
+    session_factory = get_session_maker()
+    return ml_sync_service.start_background_streaming(
+        session_factory=session_factory,
+        interval_seconds=interval_seconds,
+        site_id=site_id,
+        region_id=region_id,
+    )
+
+
+@router.post("/twin/fluctuate-stream/stop")
+async def stop_twin_fluctuation_stream():
+    """Stops continuous background fluctuation streaming."""
+    return ml_sync_service.stop_background_streaming()
+
+
+@router.get("/twin/fluctuate-stream/status")
+async def get_twin_fluctuation_stream_status():
+    """Gets status of background fluctuation streaming."""
+    return ml_sync_service.get_streaming_status()
+
+

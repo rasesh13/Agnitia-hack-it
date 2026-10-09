@@ -20,6 +20,7 @@ from backend.config import get_settings
 from backend.core.logging import setup_logging
 from backend.db.database import close_db, get_session_maker, init_db
 from backend.db.seed_demo_data import seed_prestige_microgrid
+from backend.services.ml_microgrid_sync import ml_sync_service
 from backend.services.scheduler import DecisionScheduler
 from backend.ws import ws_manager
 from backend.ws.routes_ws import router as ws_router
@@ -50,8 +51,17 @@ async def lifespan(app: FastAPI):
     set_global_scheduler(scheduler)
     scheduler.start()
 
+    # Start continuous real-time weather & ML model streaming (2.5s cadence, no demo values)
+    ml_sync_service.start_background_streaming(
+        session_factory=session_factory,
+        interval_seconds=2.5,
+        site_id=1,
+        region_id="central_india_mp_indore",
+    )
+
     yield
 
+    ml_sync_service.stop_background_streaming()
     await scheduler.stop()
     await close_db()
 
