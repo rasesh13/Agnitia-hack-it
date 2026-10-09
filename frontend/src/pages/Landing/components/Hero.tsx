@@ -12,6 +12,7 @@ import {
   Activity,
   CheckCircle2,
 } from 'lucide-react';
+import { SuryaMark } from '@/components/SuryaMark';
 
 export interface HeroProps {
   onLaunchConsole?: () => void;
@@ -232,11 +233,7 @@ export const Hero: React.FC<HeroProps> = ({ onLaunchConsole, onLogin }) => {
       {/* ============================================================ */}
       <header className="relative z-30 pt-3 px-4 sm:px-8 max-w-7xl mx-auto w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-emerald-500 p-0.5 shadow-lg shadow-amber-500/20">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-950">
-              <Sun className="h-5 w-5 text-amber-400" />
-            </div>
-          </div>
+          <SuryaMark size={42} className="shrink-0 drop-shadow-[0_0_12px_rgba(217,119,6,0.35)]" />
           <div>
             <span className="text-xl font-bold tracking-tight text-white font-display">SURYA</span>
             <span className="ml-2 hidden text-[11px] font-semibold uppercase tracking-wider text-emerald-400 sm:inline-block">

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sun, ArrowUp } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
+import { SuryaMark } from '@/components/SuryaMark';
 
 export const Footer: React.FC = () => {
   const scrollToTop = () => {
@@ -13,11 +14,7 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5">
-                <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                  <Sun className="h-4 w-4 text-amber-400" />
-                </div>
-              </div>
+              <SuryaMark size={34} className="shrink-0" />
               <span className="text-base font-bold text-white tracking-tight">SURYA VPP</span>
               <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold text-amber-400 border border-amber-500/20">
                 Govt of Rajasthan DTE

@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowRight, Sun, Shield, Terminal, BookOpen, ExternalLink } from 'lucide-react';
+import { ArrowRight, Shield, Terminal, BookOpen, ExternalLink } from 'lucide-react';
+import { SuryaMark } from '@/components/SuryaMark';
 
 interface FooterSectionProps {
   onLaunchConsole?: () => void;
@@ -76,11 +77,7 @@ export const FooterSection: React.FC<FooterSectionProps> = ({
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5">
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-950">
-                  <Sun className="h-4 w-4 text-amber-400" />
-                </div>
-              </div>
+              <SuryaMark size={38} className="shrink-0" />
               <span className="text-lg font-bold tracking-tight text-white font-display">SURYA</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-md">
