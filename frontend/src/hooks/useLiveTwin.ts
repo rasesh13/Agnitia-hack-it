@@ -37,8 +37,31 @@ export function useLiveTwin(siteId: number = 1) {
 
   // Compute live aggregates if not explicitly supplied by API
   const aggregates = useMemo(() => {
-    if (site?.aggregates) {
-      return site.aggregates;
+    const raw = site?.aggregates || (site as any)?.aggregate;
+    if (raw) {
+      const solar = Number(raw.total_solar_generation_kw ?? raw.total_solar_kw ?? 0);
+      const wind = Number(raw.total_wind_generation_kw ?? raw.total_wind_kw ?? 0);
+      const renewable = Number(
+        raw.total_renewable_generation_kw ??
+          raw.total_generation_kw ??
+          (solar + wind)
+      );
+      const demand = Number(raw.total_campus_demand_kw ?? raw.total_building_demand_kw ?? 0);
+      const battery = Number(raw.total_battery_power_kw ?? raw.net_battery_kw ?? 0);
+      const grid = Number(raw.net_grid_exchange_kw ?? raw.net_grid_flow_kw ?? 0);
+      const soc = Number(raw.average_battery_soc_percent ?? 75);
+      const freshness = raw.data_freshness_status ?? raw.overall_quality ?? (isStale ? 'stale' : 'live');
+
+      return {
+        total_solar_generation_kw: isNaN(solar) ? 0 : solar,
+        total_wind_generation_kw: isNaN(wind) ? 0 : wind,
+        total_renewable_generation_kw: isNaN(renewable) ? 0 : renewable,
+        total_campus_demand_kw: isNaN(demand) ? 0 : demand,
+        total_battery_power_kw: isNaN(battery) ? 0 : battery,
+        net_grid_exchange_kw: isNaN(grid) ? 0 : grid,
+        average_battery_soc_percent: isNaN(soc) ? 75 : Math.min(100, Math.max(0, soc)),
+        data_freshness_status: freshness,
+      };
     }
 
     let solarKw = 0;

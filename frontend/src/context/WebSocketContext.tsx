@@ -20,6 +20,7 @@ interface WebSocketContextType {
   twinData: SiteRead | null;
   latestCycle: DecisionCycle | null;
   activeAlerts: AlertNotification[];
+  liveFluctuation?: any;
   reconnect: () => void;
   sendMessage: (msg: string) => void;
   dismissAlert: (id: string) => void;
@@ -38,6 +39,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [twinData, setTwinData] = useState<SiteRead | null>(null);
   const [latestCycle, setLatestCycle] = useState<DecisionCycle | null>(null);
   const [activeAlerts, setActiveAlerts] = useState<AlertNotification[]>([]);
+  const [liveFluctuation, setLiveFluctuation] = useState<any>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
@@ -104,7 +106,37 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         try {
           const envelope: WebSocketEnvelope = JSON.parse(event.data);
           if (envelope.type === 'twin_update') {
-            setTwinData(envelope.data as SiteRead);
+            const incoming = envelope.data as any;
+            if (incoming?.fluctuation) {
+              setLiveFluctuation(incoming.fluctuation);
+            }
+            const rawAgg = incoming?.aggregates || incoming?.aggregate;
+            const normalizedAgg = rawAgg
+              ? {
+                  total_solar_generation_kw: Number(rawAgg.total_solar_generation_kw ?? rawAgg.total_solar_kw ?? 0),
+                  total_wind_generation_kw: Number(rawAgg.total_wind_generation_kw ?? rawAgg.total_wind_kw ?? 0),
+                  total_renewable_generation_kw: Number(
+                    rawAgg.total_renewable_generation_kw ??
+                      rawAgg.total_generation_kw ??
+                      ((rawAgg.total_solar_kw || 0) + (rawAgg.total_wind_kw || 0))
+                  ),
+                  total_campus_demand_kw: Number(rawAgg.total_campus_demand_kw ?? rawAgg.total_building_demand_kw ?? 0),
+                  total_battery_power_kw: Number(rawAgg.total_battery_power_kw ?? rawAgg.net_battery_kw ?? 0),
+                  net_grid_exchange_kw: Number(rawAgg.net_grid_exchange_kw ?? rawAgg.net_grid_flow_kw ?? 0),
+                  average_battery_soc_percent: Number(rawAgg.average_battery_soc_percent ?? 75),
+                  data_freshness_status: rawAgg.data_freshness_status ?? rawAgg.overall_quality ?? 'live',
+                }
+              : undefined;
+
+            setTwinData((prev) => {
+              if (!prev) return { ...incoming, aggregates: normalizedAgg } as SiteRead;
+              return {
+                ...prev,
+                ...incoming,
+                aggregates: normalizedAgg || prev.aggregates,
+                assets: incoming.assets || prev.assets,
+              };
+            });
           } else if (envelope.type === 'full_cycle') {
             setLatestCycle(envelope.data as DecisionCycle);
           } else if (envelope.type === 'alert') {
@@ -214,6 +246,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         twinData,
         latestCycle,
         activeAlerts,
+        liveFluctuation,
         reconnect,
         sendMessage,
         dismissAlert,

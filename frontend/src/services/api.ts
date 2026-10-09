@@ -494,3 +494,209 @@ export const apiHealth = {
     return request('/health/scheduler');
   },
 };
+
+// ==============================================================================
+// ML Microgrid Sync & Prediction API
+// ==============================================================================
+
+export interface MLComparisonData {
+  region_id: string;
+  site_name: string;
+  timestamp: string;
+  comparison_matrix: {
+    zero_baseline: {
+      label: string;
+      solar_kw: number;
+      wind_kw: number;
+      generation_kw: number;
+      demand_kw: number;
+      battery_kw: number;
+      grid_kw: number;
+      carbon_offset_kg_hr: number;
+      self_sufficiency_pct: number;
+    };
+    physics_baseline: {
+      label: string;
+      solar_kw: number;
+      wind_kw: number;
+      generation_kw: number;
+    };
+    ml_prediction: {
+      label: string;
+      solar_kw: number;
+      wind_kw: number;
+      generation_kw: number;
+      demand_kw: number;
+      battery_kw: number;
+      grid_kw: number;
+      carbon_offset_kg_hr: number;
+      self_sufficiency_pct: number;
+    };
+  };
+  assets: Array<{
+    asset_id: string;
+    name: string;
+    asset_type: string;
+    rated_capacity_kw: number;
+    zero_state_kw: number;
+    current_live_kw: number;
+    ml_predicted_kw: number;
+    delta_from_zero_kw: number;
+  }>;
+  weather_inputs: Record<string, number>;
+  model_metadata: {
+    algorithms: string[];
+    quantiles: string[];
+    features_count: number;
+    regional_grid_factor: number;
+  };
+}
+
+export interface MLFluctuationData {
+  status: string;
+  mode: string;
+  fluctuation: {
+    step: number;
+    solar_kw: number;
+    solar_delta_kw: number;
+    wind_kw: number;
+    wind_delta_kw: number;
+    generation_kw: number;
+    generation_delta_kw: number;
+    demand_kw: number;
+    demand_delta_kw: number;
+    battery_kw: number;
+    grid_kw: number;
+    voltage_v: number;
+    frequency_hz: number;
+    event_description: string;
+    p10_solar?: number;
+    p50_solar?: number;
+    p90_solar?: number;
+    p10_wind?: number;
+    p50_wind?: number;
+    p90_wind?: number;
+    p10_demand?: number;
+    p50_demand?: number;
+    p90_demand?: number;
+    weather?: {
+      temp_c: number;
+      ghi_wm2: number;
+      wind_speed_mps: number;
+      cloud_pct: number;
+      source: string;
+      location?: string;
+      is_live?: boolean;
+    };
+    physics_baseline?: {
+      solar_kw: number;
+      wind_kw: number;
+      total_kw: number;
+    };
+  };
+  aggregates: {
+    total_solar_generation_kw: number;
+    total_wind_generation_kw: number;
+    total_renewable_generation_kw: number;
+    total_campus_demand_kw: number;
+    total_battery_power_kw: number;
+    net_grid_exchange_kw: number;
+    average_battery_soc_percent: number;
+    data_freshness_status: string;
+  };
+  timestamp: string;
+}
+
+export const apiML = {
+  resetToZero: async (siteId: number = 1): Promise<any> => {
+    return request(`/api/v1/twin/reset-to-zero?site_id=${siteId}`, {
+      method: 'POST',
+    });
+  },
+
+  applyPrediction: async (options?: {
+    siteId?: number;
+    regionId?: string;
+    simulateDaylightPeak?: boolean;
+    weather?: {
+      ghi_wm2?: number;
+      wind_speed_mps?: number;
+      temp_c?: number;
+      cloud_pct?: number;
+    };
+  }): Promise<any> => {
+    const siteId = options?.siteId ?? 1;
+    const regionId = options?.regionId ?? 'central_india_mp_indore';
+    const simulateDaylightPeak = options?.simulateDaylightPeak ?? false;
+
+    return request(
+      `/api/v1/twin/apply-ml-prediction?site_id=${siteId}&region_id=${encodeURIComponent(
+        regionId
+      )}&simulate_daylight_peak=${simulateDaylightPeak}`,
+      {
+        method: 'POST',
+        body: options?.weather ? JSON.stringify(options.weather) : undefined,
+      }
+    );
+  },
+
+  getComparison: async (siteId: number = 1, regionId: string = 'central_india_mp_indore'): Promise<MLComparisonData> => {
+    return request(`/api/v1/twin/ml-comparison?site_id=${siteId}&region_id=${encodeURIComponent(regionId)}`);
+  },
+
+  stepFluctuation: async (siteId: number = 1, regionId: string = 'central_india_mp_indore'): Promise<MLFluctuationData> => {
+    return request<MLFluctuationData>(
+      `/api/v1/twin/fluctuate-step?site_id=${siteId}&region_id=${encodeURIComponent(regionId)}`,
+      { method: 'POST' }
+    );
+  },
+
+  startFluctuationStream: async (siteId: number = 1, intervalSeconds: number = 2.5, regionId: string = 'central_india_mp_indore'): Promise<any> => {
+    return request(
+      `/api/v1/twin/fluctuate-stream/start?site_id=${siteId}&interval_seconds=${intervalSeconds}&region_id=${encodeURIComponent(regionId)}`,
+      { method: 'POST' }
+    );
+  },
+
+  stopFluctuationStream: async (): Promise<any> => {
+    return request('/api/v1/twin/fluctuate-stream/stop', { method: 'POST' });
+  },
+
+  getFluctuationStatus: async (): Promise<{
+    is_streaming: boolean;
+    step_count: number;
+    last_state: Record<string, number>;
+    last_event_description: string;
+  }> => {
+    return request('/api/v1/twin/fluctuate-stream/status');
+  },
+
+  getLiveWeather: async (regionId: string = 'central_india_mp_indore'): Promise<{
+    region_id: string;
+    weather: {
+      temp_c: number;
+      relative_humidity_2m: number;
+      ghi_wm2: number;
+      dni_wm2: number;
+      dhi_wm2: number;
+      wind_speed_mps: number;
+      wind_direction_10m: number;
+      cloud_pct: number;
+      source: string;
+      fetched_at: string;
+      is_live_api: boolean;
+    };
+    physics_baseline: {
+      solar_physics_kw: number;
+      wind_physics_kw: number;
+      total_generation_kw: number;
+    };
+    streaming_status: {
+      is_streaming: boolean;
+      step_count: number;
+    };
+  }> => {
+    return request(`/api/v1/forecast/weather-live?region_id=${encodeURIComponent(regionId)}`);
+  },
+};
+
