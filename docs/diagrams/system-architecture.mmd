@@ -1,0 +1,37 @@
+%% SURYA system context and components (verified against backend/main.py, frontend/src, mobile/src, simulator/src)
+flowchart LR
+    subgraph Clients
+        WEB["Web console<br/>React 18 + Vite SPA<br/>frontend/"]
+        SIM["3D campus simulator<br/>React 19 + three.js<br/>served at /simulator/ in an iframe"]
+        MOB["SURYA Ops Android app<br/>Capacitor 8<br/>mobile/"]
+    end
+
+    subgraph Backend["FastAPI process (backend/main.py)"]
+        API["REST routers<br/>/api/v1/*, /health"]
+        WS["WebSocket /ws<br/>WebSocketManager"]
+        SCHED["DecisionScheduler<br/>every DECISION_CYCLE_SECONDS"]
+        MLS["MLMicrogridSyncService<br/>fluctuation stream, 3 s"]
+        DM["DecisionManager<br/>forecast, reliability, dispatch"]
+        FC["AgnitiaMLForecaster<br/>joblib models or dummy fallback"]
+    end
+
+    DB[("PostgreSQL (prod)<br/>SQLite (dev/test)")]
+    OM["Open-Meteo API"]
+    GOOG["Google Identity<br/>(GSI + JWKS)"]
+    WTTR["wttr.in / Open-Meteo<br/>(simulator only)"]
+
+    WEB -- "HTTPS JSON + Bearer JWT" --> API
+    WEB -- "WSS ?token=JWT" --> WS
+    WEB -- "iframe" --> SIM
+    MOB -- "HTTP JSON + Bearer JWT (polling)" --> API
+    SIM -- "weather fetch" --> WTTR
+    WEB -- "GSI button" --> GOOG
+    API -- "verify ID token (JWKS)" --> GOOG
+    API --> DB
+    SCHED --> DM --> DB
+    MLS --> FC
+    MLS --> DM
+    MLS --> DB
+    FC -- "current weather" --> OM
+    SCHED -- "full_cycle" --> WS
+    MLS -- "twin_update, full_cycle" --> WS
