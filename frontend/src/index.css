@@ -76,7 +76,7 @@ body {
 .surya-console,
 .surya-console * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: #d6c6a8 transparent;
 }
 
 .surya-console ::-webkit-scrollbar {
@@ -85,14 +85,14 @@ body {
 }
 
 .surya-console ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #d6c6a8;
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .surya-console ::-webkit-scrollbar-thumb:hover {
-  background-color: #475569;
+  background-color: #bfa983;
 }
 
 .surya-console ::-webkit-scrollbar-track {
@@ -105,7 +105,7 @@ body {
 .surya-console input:focus-visible,
 .surya-console select:focus-visible,
 .surya-console textarea:focus-visible {
-  outline: 2px solid #34d399;
+  outline: 2px solid #0b1220;
   outline-offset: 2px;
 }
 
@@ -147,37 +147,42 @@ body {
 .surya-page > div > *:nth-child(5) { animation-delay: 0.2s; }
 .surya-page > div > *:nth-child(n + 6) { animation-delay: 0.25s; }
 
-/* Page titles: soft white-to-silver gradient (skipped when the heading holds an icon). */
-.surya-page h1:not(:has(svg)) {
-  background: linear-gradient(92deg, #ffffff 0%, #e2e8f0 55%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Page titles: solid navy, like the rest of the cream console. */
+.surya-page h1 {
+  color: #0b1220;
 }
 
-/* Dark panels: faint top highlight, depth shadow and a softer border. */
+/* Cards: solid off-white with a soft warm shadow instead of translucent dark glass. */
+.surya-console [class*="bg-slate-900/"] {
+  background-color: #fdfbf7;
+}
+
 .surya-page [class*="rounded-3xl"][class*="border-slate-800"],
-.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-900"] {
-  border-color: rgba(255, 255, 255, 0.07);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 45%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-900"],
+.surya-page [class*="rounded-2xl"][class*="border-white/"][class*="bg-slate-900"] {
+  border-color: rgba(122, 90, 58, 0.12);
+  background-image: none;
+  box-shadow: 0 1px 2px rgba(80, 55, 20, 0.04), 0 14px 32px -18px rgba(120, 88, 40, 0.28);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .surya-page [class*="rounded-3xl"][class*="border-slate-800"]:hover,
 .surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-900"]:hover {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(122, 90, 58, 0.22);
 }
 
-/* Inner tiles sitting inside panels. */
-.surya-page [class*="rounded-2xl"][class*="border-slate-800"][class*="bg-slate-950"] {
-  border-color: rgba(255, 255, 255, 0.06);
-  background-color: rgba(2, 6, 23, 0.55);
+/* Inner tiles sitting inside cards: warm cream, like the segmented controls in the theme. */
+.surya-console [class*="bg-slate-950/"] {
+  background-color: #f6efe3;
+}
+
+.surya-console [class*="bg-slate-950/"][class*="border-"] {
+  border-color: rgba(122, 90, 58, 0.12);
 }
 
 /* Tables: calmer header and row hover. */
 .surya-page table thead {
-  background: rgba(2, 6, 23, 0.5);
+  background: #f3eadb;
 }
 
 .surya-page table tbody tr {
@@ -194,4 +199,49 @@ body {
   .surya-page > div > * {
     animation: none;
   }
+}
+
+/* ---------- Readability layer ----------
+   The console is often shown on a projector or wall screen, so tiny labels and dim grey
+   text are lifted to sizes and contrast that read from across a room. */
+.surya-console .text-\[9px\],
+.surya-console .text-\[10px\] {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.surya-console .text-\[11px\],
+.surya-console .text-\[12px\],
+.surya-console .text-\[12\.5px\],
+.surya-console .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.surya-console .text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.4rem;
+}
+
+/* Monospace at small sizes is hard to read at a distance; keep aligned digits instead. */
+.surya-page .font-mono {
+  font-family: Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.surya-page h1 {
+  font-size: 2rem;
+  line-height: 2.4rem;
+}
+
+/* Primary actions use the theme's navy pill instead of a green gradient. */
+.surya-console button[class*="from-emerald-6"] {
+  background-image: none;
+  background-color: #0b1220;
+  color: #fdfbf7;
+  border-radius: 9999px;
+}
+
+.surya-console button[class*="from-emerald-6"]:hover:not(:disabled) {
+  background-color: #1e293b;
 }
