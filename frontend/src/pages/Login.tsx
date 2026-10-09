@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sun, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { SuryaMark } from '@/components/SuryaMark';
 
 interface LoginProps {
   onNavigateSignup: () => void;
@@ -38,11 +39,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
       <div className="w-full max-w-md space-y-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl">
         {/* Header Branding */}
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-emerald-500 p-0.5 shadow-lg shadow-emerald-500/20">
-            <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950">
-              <Sun className="h-7 w-7 text-amber-400 animate-pulse" />
-            </div>
-          </div>
+          <SuryaMark size={60} className="mx-auto drop-shadow-[0_0_24px_rgba(245,158,11,0.4)]" />
           <h2 className="mt-5 text-2xl font-bold tracking-tight text-white">
             SURYA Operations Platform
           </h2>
