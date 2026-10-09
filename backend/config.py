@@ -1,7 +1,23 @@
+import logging
+import socket
 from typing import List, Optional, Union
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+SQLITE_FALLBACK_URL = "sqlite+aiosqlite:///./surya.db"
+
+
+def _host_resolves(host: Optional[str]) -> bool:
+    if not host:
+        return False
+    try:
+        socket.getaddrinfo(host, None)
+        return True
+    except socket.gaierror:
+        return False
 
 
 class Settings(BaseSettings):
@@ -157,7 +173,13 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             for prefix in ("postgres://", "postgresql://"):
                 if v.startswith(prefix):
-                    return "postgresql+asyncpg://" + v[len(prefix):]
+                    v = "postgresql+asyncpg://" + v[len(prefix):]
+            if v.startswith("postgresql") and not _host_resolves(urlsplit(v).hostname):
+                # The hosted Postgres is gone (free Render databases expire), so run on SQLite.
+                logging.getLogger("surya.config").warning(
+                    "Database host for DATABASE_URL does not resolve; falling back to %s", SQLITE_FALLBACK_URL
+                )
+                return SQLITE_FALLBACK_URL
         return v
 
     @field_validator("CORS_ORIGINS", mode="before")
