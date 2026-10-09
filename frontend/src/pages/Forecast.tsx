@@ -9,7 +9,11 @@ import {
   Layers,
   BarChart3,
   RefreshCw,
+  Info,
+  LineChart as LineChartIcon,
 } from 'lucide-react';
+
+const formatMetric = (value?: number | null) => (value === undefined || value === null ? '—' : value.toLocaleString());
 
 interface MetricDetail {
   MAE: number;
@@ -126,6 +130,9 @@ export const Forecast: React.FC = () => {
     metrics = data?.metrics?.[selectedTarget];
   }
 
+  const hasMetrics = Boolean(metrics?.ml_metrics);
+  const hasSeries = series.some((p) => p.p50_prediction > 0 || p.baseline > 0 || p.p90_upper > 0);
+
   // Max value for chart scaling
   const maxVal = Math.max(...series.map((p) => Math.max(p.p90_upper, p.baseline, p.actual || 0)), 1);
 
@@ -192,6 +199,19 @@ export const Forecast: React.FC = () => {
         })}
       </div>
 
+      {!hasMetrics && (
+        <div className="flex items-start gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4 text-xs text-sky-100">
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-400" />
+          <div>
+            <div className="font-semibold text-sky-200">Forecast models not loaded</div>
+            <p className="mt-0.5 text-sky-100/70">
+              The forecasting service is running, but no trained model checkpoints were found on this server, so accuracy
+              metrics and predictions are unavailable. Place the model files in the configured model directory and click Refresh.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Accuracy Benchmark Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-md">
@@ -200,11 +220,11 @@ export const Forecast: React.FC = () => {
             <BarChart3 className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-white font-mono">
-            {metrics?.ml_metrics?.MAE.toLocaleString()} <span className="text-xs text-slate-400">{unit}</span>
+            {formatMetric(metrics?.ml_metrics?.MAE)} {hasMetrics && <span className="text-xs text-slate-400">{unit}</span>}
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
             <span>Baseline MAE:</span>
-            <span className="font-mono text-slate-300">{metrics?.baseline_metrics?.MAE.toLocaleString()} {unit}</span>
+            <span className="font-mono text-slate-300">{formatMetric(metrics?.baseline_metrics?.MAE)} {hasMetrics ? unit : ''}</span>
           </div>
         </div>
 
@@ -214,11 +234,11 @@ export const Forecast: React.FC = () => {
             <Activity className="h-4 w-4 text-sky-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-white font-mono">
-            {metrics?.ml_metrics?.RMSE.toLocaleString()} <span className="text-xs text-slate-400">{unit}</span>
+            {formatMetric(metrics?.ml_metrics?.RMSE)} {hasMetrics && <span className="text-xs text-slate-400">{unit}</span>}
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
             <span>R² Goodness of Fit:</span>
-            <span className="font-mono text-emerald-400">{metrics?.ml_metrics?.R2}</span>
+            <span className="font-mono text-emerald-400">{formatMetric(metrics?.ml_metrics?.R2)}</span>
           </div>
         </div>
 
@@ -228,7 +248,7 @@ export const Forecast: React.FC = () => {
             <Layers className="h-4 w-4 text-amber-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-amber-300 font-mono">
-            {metrics?.coverage_pct}%
+            {metrics?.coverage_pct !== undefined ? `${metrics.coverage_pct}%` : '—'}
           </div>
           <div className="mt-1 text-xs text-slate-400">
             Empirical confidence band [P10–P90]
@@ -280,6 +300,13 @@ export const Forecast: React.FC = () => {
 
         {/* Visual Chart */}
         <div className="relative h-64 w-full pt-4">
+          {!hasSeries && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-center">
+              <LineChartIcon className="h-8 w-8 text-slate-600" />
+              <span className="text-sm font-semibold text-slate-300">No forecast data to plot yet</span>
+              <span className="max-w-sm text-xs text-slate-500">The 48-hour curves will appear here once the forecast models are loaded.</span>
+            </div>
+          )}
           <svg className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${series.length} 100`}>
             {/* Grid Lines */}
             {[25, 50, 75].map((y) => (
@@ -287,7 +314,7 @@ export const Forecast: React.FC = () => {
             ))}
 
             {/* Uncertainty Area (P10 to P90) */}
-            {series.length > 1 && (
+            {hasSeries && series.length > 1 && (
               <polygon
                 points={
                   series
@@ -305,7 +332,7 @@ export const Forecast: React.FC = () => {
             )}
 
             {/* Baseline Path */}
-            {series.length > 1 && (
+            {hasSeries && series.length > 1 && (
               <polyline
                 fill="none"
                 stroke="rgba(148, 163, 184, 0.5)"
@@ -316,7 +343,7 @@ export const Forecast: React.FC = () => {
             )}
 
             {/* ML P50 Path */}
-            {series.length > 1 && (
+            {hasSeries && series.length > 1 && (
               <polyline
                 fill="none"
                 stroke="#f59e0b"
