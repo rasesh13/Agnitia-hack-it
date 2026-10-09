@@ -102,6 +102,10 @@ interface LiveWeatherState {
   };
 }
 
+// Forecast timestamps arrive in UTC; operators read them in Indian Standard Time.
+const istTime = (timestamp: string) =>
+  new Date(timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+
 export const Forecast: React.FC = () => {
   const [data, setData] = useState<ForecastPayload | null>(null);
   const [weatherData, setWeatherData] = useState<LiveWeatherState | null>(null);
@@ -779,12 +783,12 @@ export const Forecast: React.FC = () => {
             </div>
             {showActual && (
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="h-1 w-5 rounded-full bg-emerald-400" />
                 <span className="text-emerald-300 font-medium">Actual / Ground Truth</span>
               </div>
             )}
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="w-5 border-t-2 border-dashed border-amber-400" />
               <span className="text-slate-200">ML Forecast (P50)</span>
             </div>
             {showBaseline && (
@@ -811,14 +815,14 @@ export const Forecast: React.FC = () => {
               <span className="max-w-sm text-xs text-slate-500">The {horizonHours}-hour curves will appear here once the forecast models are loaded.</span>
             </div>
           )}
-          <svg className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${series.length} 100`}>
+          <svg className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${Math.max(series.length - 1, 1)} 100`}>
             {/* Grid Lines */}
             {[25, 50, 75].map((y) => (
-              <line key={y} x1="0" y1={y} x2={series.length} y2={y} stroke="rgba(255,255,255,0.05)" strokeDasharray="2" />
+              <line key={y} x1="0" y1={y} x2={series.length - 1} y2={y} stroke="rgba(11,18,32,0.1)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
             ))}
 
             {/* Zero Baseline Line at y=0 kW (bottom of chart) */}
-            <line x1="0" y1="99.5" x2={series.length} y2="99.5" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" />
+            <line x1="0" y1="99.5" x2={series.length - 1} y2="99.5" stroke="#dc2626" strokeWidth="1.5" strokeDasharray="6 4" vectorEffect="non-scaling-stroke" />
 
             {/* Uncertainty Area (P10 to P90) */}
             {showUncertaintyBand && hasSeries && series.length > 1 && (
@@ -834,7 +838,7 @@ export const Forecast: React.FC = () => {
                     .map((p, i) => `${series.length - 1 - i},${100 - (p.p10_lower / maxVal) * 100}`)
                     .join(' ')
                 }
-                fill="rgba(245, 158, 11, 0.15)"
+                fill="rgba(217, 119, 6, 0.16)"
               />
             )}
 
@@ -842,31 +846,40 @@ export const Forecast: React.FC = () => {
             {showBaseline && hasSeries && series.length > 1 && (
               <polyline
                 fill="none"
-                stroke="rgba(148, 163, 184, 0.6)"
-                strokeWidth="1.4"
-                strokeDasharray="3 3"
+                stroke="#9a8c77"
+                strokeWidth="1.5"
+                strokeDasharray="5 4"
+                vectorEffect="non-scaling-stroke"
                 points={series.map((p, i) => `${i},${100 - (p.baseline / maxVal) * 100}`).join(' ')}
               />
             )}
 
-            {/* ML P50 Path */}
-            {hasSeries && series.length > 1 && (
+            {/* Actual / Ground Truth Path (solid, underneath the forecast) */}
+            {showActual && hasSeries && series.length > 1 && series.some((p) => p.actual != null) && (
               <polyline
                 fill="none"
-                stroke="#f59e0b"
-                strokeWidth="2.5"
-                points={series.map((p, i) => `${i},${100 - (p.p50_prediction / maxVal) * 100}`).join(' ')}
+                stroke="#059669"
+                strokeWidth="3.5"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                points={series
+                  .map((p, i) => (p.actual != null ? `${i},${100 - (p.actual / maxVal) * 100}` : null))
+                  .filter(Boolean)
+                  .join(' ')}
               />
             )}
 
-            {/* Actual / Ground Truth Path */}
-            {showActual && hasSeries && series.length > 1 && (
+            {/* ML P50 Path (dashed, on top) */}
+            {hasSeries && series.length > 1 && (
               <polyline
                 fill="none"
-                stroke="#10b981"
-                strokeWidth="2.0"
-                strokeDasharray="2 2"
-                points={series.map((p, i) => `${i},${100 - ((p.actual ?? p.p50_prediction) / maxVal) * 100}`).join(' ')}
+                stroke="#d97706"
+                strokeWidth="2.5"
+                strokeDasharray="7 5"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                points={series.map((p, i) => `${i},${100 - (p.p50_prediction / maxVal) * 100}`).join(' ')}
               />
             )}
           </svg>
@@ -874,11 +887,11 @@ export const Forecast: React.FC = () => {
 
         {/* X-axis Timeline */}
         <div className="mt-3 flex justify-between text-[11px] text-slate-500 font-mono border-t border-slate-800/60 pt-2">
-          <span>{series[0]?.timestamp.slice(11, 16) || 'T+0'} (Now)</span>
-          <span>{series[Math.floor(series.length / 4)]?.timestamp.slice(11, 16) || `T+${Math.floor(horizonHours / 4)}h`}</span>
-          <span>{series[Math.floor(series.length / 2)]?.timestamp.slice(11, 16) || `T+${Math.floor(horizonHours / 2)}h`}</span>
-          <span>{series[Math.floor((3 * series.length) / 4)]?.timestamp.slice(11, 16) || `T+${Math.floor((3 * horizonHours) / 4)}h`}</span>
-          <span>{series[series.length - 1]?.timestamp.slice(11, 16) || `T+${horizonHours}h`}</span>
+          <span>{series[0] ? istTime(series[0].timestamp) : 'T+0'} (Now)</span>
+          <span>{series[Math.floor(series.length / 4)] ? istTime(series[Math.floor(series.length / 4)].timestamp) : `T+${Math.floor(horizonHours / 4)}h`}</span>
+          <span>{series[Math.floor(series.length / 2)] ? istTime(series[Math.floor(series.length / 2)].timestamp) : `T+${Math.floor(horizonHours / 2)}h`}</span>
+          <span>{series[Math.floor((3 * series.length) / 4)] ? istTime(series[Math.floor((3 * series.length) / 4)].timestamp) : `T+${Math.floor((3 * horizonHours) / 4)}h`}</span>
+          <span>{series[series.length - 1] ? istTime(series[series.length - 1].timestamp) : `T+${horizonHours}h`}</span>
         </div>
 
         {/* Toggle Hourly Table Button */}
@@ -915,7 +928,7 @@ export const Forecast: React.FC = () => {
                   const inBand = act >= pt.p10_lower && act <= pt.p90_upper;
                   return (
                     <tr key={idx} className="hover:bg-slate-800/30">
-                      <td className="py-1.5 text-slate-400">{pt.timestamp.slice(11, 16)} (T+{idx}h)</td>
+                      <td className="py-1.5 text-slate-400">{istTime(pt.timestamp)} (T+{idx}h)</td>
                       <td className="py-1.5 text-right font-bold text-emerald-400">{act.toFixed(1)}</td>
                       <td className="py-1.5 text-right text-slate-400">{pt.baseline.toFixed(1)}</td>
                       <td className="py-1.5 text-right font-bold text-amber-300">{pt.p50_prediction.toFixed(1)}</td>
