@@ -41,7 +41,8 @@ function getStoredToken(): string | null {
   return localStorage.getItem('surya_token');
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+// Sends an authenticated request and throws an ApiError for any non-2xx response.
+async function authorizedFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const token = getStoredToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -90,6 +91,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     throw new ApiError(errorDetail.message, errorDetail.code, response.status, errorDetail.details);
   }
+
+  return response;
+}
+
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const response = await authorizedFetch(endpoint, options);
 
   // Check if 204 No Content
   if (response.status === 204) {
@@ -458,22 +465,26 @@ export const apiExport = {
     return request<ExportStats>(`/api/v1/export/stats?${query.toString()}`);
   },
 
-  getCsvDownloadUrl: (siteId: number = 1, fromDt?: string, toDt?: string): string => {
-    const token = getStoredToken();
+  // Downloads the CSV or PDF report. Opening the URL in a new tab cannot send the login token,
+  // so the file is fetched with it and saved from memory instead.
+  downloadReport: async (format: 'csv' | 'pdf', siteId: number = 1, fromDt?: string, toDt?: string): Promise<void> => {
     const query = new URLSearchParams({ site_id: String(siteId) });
     if (fromDt) query.append('from_dt', fromDt);
     if (toDt) query.append('to_dt', toDt);
-    if (token) query.append('token', token);
-    return `${API_BASE_URL}/api/v1/export/csv?${query.toString()}`;
-  },
+    const response = await authorizedFetch(`/api/v1/export/${format}?${query.toString()}`);
+    const blob = await response.blob();
+    const filename =
+      response.headers.get('Content-Disposition')?.match(/filename="?([^";]+)"?/)?.[1] ??
+      `surya_report_site_${siteId}.${format}`;
 
-  getPdfDownloadUrl: (siteId: number = 1, fromDt?: string, toDt?: string): string => {
-    const token = getStoredToken();
-    const query = new URLSearchParams({ site_id: String(siteId) });
-    if (fromDt) query.append('from_dt', fromDt);
-    if (toDt) query.append('to_dt', toDt);
-    if (token) query.append('token', token);
-    return `${API_BASE_URL}/api/v1/export/pdf?${query.toString()}`;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
 };
 

@@ -18,6 +18,8 @@ import {
 export const Reports: React.FC = () => {
   const [stats, setStats] = useState<ExportStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [downloading, setDownloading] = useState<'csv' | 'pdf' | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
@@ -98,22 +100,17 @@ export const Reports: React.FC = () => {
     fetchStats();
   }, [fetchStats]);
 
-  const handleDownloadCsv = () => {
-    const url = apiExport.getCsvDownloadUrl(
-      1,
-      `${startDate}T00:00:00Z`,
-      `${endDate}T23:59:59Z`
-    );
-    window.open(url, '_blank');
-  };
-
-  const handleDownloadPdf = () => {
-    const url = apiExport.getPdfDownloadUrl(
-      1,
-      `${startDate}T00:00:00Z`,
-      `${endDate}T23:59:59Z`
-    );
-    window.open(url, '_blank');
+  const handleDownload = async (format: 'csv' | 'pdf') => {
+    setDownloading(format);
+    setDownloadError(null);
+    try {
+      await apiExport.downloadReport(format, 1, `${startDate}T00:00:00Z`, `${endDate}T23:59:59Z`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Download failed';
+      setDownloadError(`Could not download the ${format.toUpperCase()} report: ${msg}`);
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const metrics = stats?.metrics;
@@ -132,24 +129,32 @@ export const Reports: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={handleDownloadCsv}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700 hover:text-white shadow-sm"
+            onClick={() => handleDownload('csv')}
+            disabled={downloading !== null}
+            className="disabled:opacity-60 flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700 hover:text-white shadow-sm"
           >
             <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-            <span>Export CSV</span>
+            <span>{downloading === 'csv' ? 'Preparing CSV...' : 'Export CSV'}</span>
             <Download className="h-3 w-3 text-slate-400 ml-0.5" />
           </button>
 
           <button
-            onClick={handleDownloadPdf}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-md shadow-emerald-500/20 transition-all hover:from-emerald-400 hover:to-teal-400 active:scale-95"
+            onClick={() => handleDownload('pdf')}
+            disabled={downloading !== null}
+            className="disabled:opacity-60 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-md shadow-emerald-500/20 transition-all hover:from-emerald-400 hover:to-teal-400 active:scale-95"
           >
             <FileText className="h-4 w-4" />
-            <span>Executive PDF Report</span>
+            <span>{downloading === 'pdf' ? 'Preparing PDF...' : 'Executive PDF Report'}</span>
             <Download className="h-3 w-3 text-slate-900 ml-0.5" />
           </button>
         </div>
       </div>
+
+      {downloadError && (
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+          {downloadError}
+        </div>
+      )}
 
       {/* Date Range Selector Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
