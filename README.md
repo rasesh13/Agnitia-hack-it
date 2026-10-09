@@ -86,6 +86,15 @@ npm run dev   # http://127.0.0.1:5173/#prestige-university
 npm test      # energy model and weather tests
 ```
 
+#### SURYA Ops Android App:
+[`mobile/`](mobile/) is a lightweight Android companion app (React + Capacitor) for operators: live microgrid status, on-device alert rules with phone notifications (also checked about every 15 minutes while the app is closed), optimizer insights, and force-cycle and emergency-stop controls. It connects to this backend over the local network. Run the backend on all interfaces so phones can reach it:
+
+```bash
+uvicorn backend.main:app --host 0.0.0.0 --port 8010
+```
+
+See [`mobile/README.md`](mobile/README.md) for building the APK.
+
 ---
 
 ## Quality Gates & Verification
