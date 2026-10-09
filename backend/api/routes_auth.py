@@ -165,7 +165,7 @@ async def google_auth(
         )
 
     try:
-        identity = await verify_google_id_token_async(payload.id_token, settings.GOOGLE_CLIENT_ID)
+        identity = await verify_google_id_token_async(payload.id_token, settings.google_client_ids)
         email = identity.email
         google_sub = identity.sub
     except GoogleTokenError as err:

@@ -8,6 +8,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 SQLITE_FALLBACK_URL = "sqlite+aiosqlite:///./surya.db"
+# OAuth client the deployed web console (Vercel VITE_GOOGLE_CLIENT_ID) signs in with.
+WEB_CONSOLE_GOOGLE_CLIENT_ID = "786009000625-1ta9teamngj3ldkndu64lehi2uh0rc8t.apps.googleusercontent.com"
 
 
 def _host_resolves(host: Optional[str]) -> bool:
@@ -56,7 +58,9 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         120, gt=0, description="JWT token validity in minutes"
     )
-    GOOGLE_CLIENT_ID: Optional[str] = Field(None, description="Optional Google OAuth Client ID")
+    GOOGLE_CLIENT_ID: Optional[str] = Field(
+        None, description="Optional Google OAuth Client ID; comma-separate to accept several"
+    )
 
     # Database
     DATABASE_URL: str = Field(
@@ -181,6 +185,12 @@ class Settings(BaseSettings):
                 )
                 return SQLITE_FALLBACK_URL
         return v
+
+    @property
+    def google_client_ids(self) -> List[str]:
+        """Audiences accepted on Google ID tokens: the configured IDs plus the web console's."""
+        ids = [i.strip() for i in (self.GOOGLE_CLIENT_ID or "").split(",") if i.strip()]
+        return ids + [WEB_CONSOLE_GOOGLE_CLIENT_ID] if WEB_CONSOLE_GOOGLE_CLIENT_ID not in ids else ids
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

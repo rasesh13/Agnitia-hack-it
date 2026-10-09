@@ -35,7 +35,7 @@ def _jwks_client() -> PyJWKClient:
 
 
 def verify_google_id_token(
-    id_token: str, client_id: str, jwks_client: PyJWKClient | None = None
+    id_token: str, client_id: str | list[str], jwks_client: PyJWKClient | None = None
 ) -> GoogleIdentity:
     """Verifies a Google ID token synchronously and returns the account identity."""
     try:
@@ -58,6 +58,6 @@ def verify_google_id_token(
     return GoogleIdentity(sub=str(claims["sub"]), email=str(email).lower())
 
 
-async def verify_google_id_token_async(id_token: str, client_id: str) -> GoogleIdentity:
+async def verify_google_id_token_async(id_token: str, client_id: str | list[str]) -> GoogleIdentity:
     """Runs verification off the event loop, since fetching Google's keys is blocking I/O."""
     return await asyncio.to_thread(verify_google_id_token, id_token, client_id)
