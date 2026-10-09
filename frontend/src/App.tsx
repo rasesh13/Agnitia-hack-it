@@ -198,7 +198,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
               {alertCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-950" />}
             </button>
 
-            <div className="relative" ref={menuRef}>
+            <div className="relative z-50" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((value) => !value)}
                 className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
@@ -212,7 +212,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
                 <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
               </button>
               {menuOpen && (
-                <div role="menu" className="surya-pop absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/50">
+                <div role="menu" className="surya-pop absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/50">
                   <div className="border-b border-white/5 p-4">
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <User className="h-3.5 w-3.5" />
