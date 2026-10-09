@@ -68,9 +68,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     isManuallyClosedRef.current = false;
     setConnectionStatus(retryCountRef.current > 0 ? 'reconnecting' : 'connecting');
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws?token=${encodeURIComponent(token)}`;
+    // When the API lives on another origin (e.g. Render), connect the socket there too.
+    const apiBase = import.meta.env.VITE_API_URL as string | undefined;
+    const socketBase = apiBase
+      ? apiBase.replace(/^http/, 'ws').replace(/\/+$/, '')
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+    const wsUrl = `${socketBase}/ws?token=${encodeURIComponent(token)}`;
 
     try {
       const ws = new WebSocket(wsUrl);
