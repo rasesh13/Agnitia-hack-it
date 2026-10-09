@@ -8,8 +8,8 @@ import { askNotificationsOnce } from '../lib/notify';
 import { storage } from '../lib/storage';
 import { useApp } from '../state/AppState';
 
-// The SURYA backend on the operator's PC; editable on the form.
-const DEFAULT_SERVER = 'http://172.10.21.55:8010';
+// The hosted SURYA backend on Render; editable on the form.
+const DEFAULT_SERVER = 'https://surya-backend-tohi.onrender.com';
 const DEMO_ACCOUNT = { email: 'admin@prestige.edu.in', password: 'SuryaAdmin2026!' };
 
 export function SignIn() {
