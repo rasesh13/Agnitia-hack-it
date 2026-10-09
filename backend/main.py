@@ -95,6 +95,8 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        # Lets the browser read the report filename on cross-origin downloads.
+        expose_headers=["Content-Disposition"],
     )
 
     # 3. Register standard SURYA exception handlers
