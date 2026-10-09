@@ -1,3 +1,5 @@
+> **Legacy document.** Superseded by the code-verified documentation in [`docs/README.md`](../README.md). Kept for historical reference.
+
 # SURYA Platform Technical Architecture
 
 > **Smart Unified Renewable Yield Automation (SURYA)**  

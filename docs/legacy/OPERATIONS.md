@@ -1,3 +1,5 @@
+> **Legacy document.** Superseded by the code-verified documentation in [`docs/README.md`](../README.md). Kept for historical reference.
+
 # SURYA Platform Operations Manual & Runbooks
 
 > **Deployment Configurations, Environment Profiles, Database Migrations, and Emergency Runbooks**

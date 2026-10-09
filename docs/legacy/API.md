@@ -1,3 +1,5 @@
+> **Legacy document.** Superseded by the code-verified documentation in [`docs/README.md`](../README.md). Kept for historical reference.
+
 # SURYA Platform API & WebSocket Specification
 
 > **Complete RESTful Endpoint Reference & Real-Time WebSocket Streaming Interface**  

@@ -1,3 +1,5 @@
+> **Legacy document.** Superseded by the code-verified documentation in [`docs/README.md`](../README.md). Kept for historical reference.
+
 # Contributing to SURYA
 
 > **Local Development Guidelines, Code Quality Gates, and Conventional Commit Standards**
