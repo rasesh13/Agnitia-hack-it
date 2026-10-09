@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { WebSocketProvider } from './context/WebSocketContext';
+import { ConnectionStatus, WebSocketProvider, useWebSocket } from './context/WebSocketContext';
 import { ConnectionBanner } from './components/ConnectionBanner';
 import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
@@ -32,6 +32,8 @@ import {
   User,
   LineChart,
   Home,
+  ChevronDown,
+  Clock,
 } from 'lucide-react';
 
 export type NavTab =
@@ -51,149 +53,308 @@ interface AuthenticatedAppProps {
   onReturnToLanding?: () => void;
 }
 
+interface NavItem {
+  id: NavTab;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const ACTIVE_TAB_KEY = 'surya_active_tab';
+
+const STATUS_STYLES: Record<ConnectionStatus, { label: string; dot: string; pill: string }> = {
+  connected: { label: 'Live', dot: 'bg-emerald-400', pill: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' },
+  connecting: { label: 'Connecting', dot: 'bg-amber-400 animate-pulse', pill: 'border-amber-500/30 bg-amber-500/10 text-amber-300' },
+  reconnecting: { label: 'Reconnecting', dot: 'bg-amber-400 animate-pulse', pill: 'border-amber-500/30 bg-amber-500/10 text-amber-300' },
+  disconnected: { label: 'Offline', dot: 'bg-red-400', pill: 'border-red-500/30 bg-red-500/10 text-red-300' },
+  error: { label: 'Offline', dot: 'bg-red-400', pill: 'border-red-500/30 bg-red-500/10 text-red-300' },
+};
+
+const useIstClock = () => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return new Intl.DateTimeFormat('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  }).format(now);
+};
+
 const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }) => {
   const { user, logout, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const { connectionStatus, isStale, activeAlerts } = useWebSocket();
+  const clock = useIstClock();
 
-  const navItems = [
-    { id: 'overview', label: 'Mission Control', icon: LayoutDashboard },
-    { id: 'forecast', label: 'ML Forecasting', icon: LineChart },
-    { id: 'twin', label: 'Digital Twin', icon: Cpu },
-    { id: 'optimizer', label: 'Optimizer', icon: Zap },
-    { id: 'renewables', label: 'Renewables', icon: Sun },
-    { id: 'battery', label: 'Battery BESS', icon: BatteryCharging },
-    { id: 'grid', label: 'Grid & Tariffs', icon: Globe },
-    { id: 'scheduler', label: 'Scheduler', icon: Activity },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
-    { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet },
-    ...(isAdmin ? [{ id: 'settings', label: 'Settings', icon: SettingsIcon }] : []),
-  ];
+  const navItems = useMemo<NavItem[]>(
+    () => [
+      { id: 'overview', label: 'Mission Control', icon: LayoutDashboard },
+      { id: 'forecast', label: 'ML Forecasting', icon: LineChart },
+      { id: 'twin', label: 'Digital Twin', icon: Cpu },
+      { id: 'optimizer', label: 'Optimizer', icon: Zap },
+      { id: 'renewables', label: 'Renewables', icon: Sun },
+      { id: 'battery', label: 'Battery BESS', icon: BatteryCharging },
+      { id: 'grid', label: 'Grid & Tariffs', icon: Globe },
+      { id: 'scheduler', label: 'Scheduler', icon: Activity },
+      { id: 'alerts', label: 'Alerts', icon: Bell },
+      { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
+      ...(isAdmin ? [{ id: 'settings' as NavTab, label: 'Settings', icon: SettingsIcon }] : []),
+    ],
+    [isAdmin],
+  );
+
+  const [activeTab, setActiveTab] = useState<NavTab>(() => (localStorage.getItem(ACTIVE_TAB_KEY) as NavTab | null) ?? 'overview');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const [navFade, setNavFade] = useState({ left: false, right: false });
+
+  // Fall back to the overview if the saved tab is unavailable (e.g. Settings for non-admins).
+  const current = navItems.find((item) => item.id === activeTab) ?? navItems[0];
+
+  const selectTab = (id: NavTab) => {
+    setActiveTab(id);
+    localStorage.setItem(ACTIVE_TAB_KEY, id);
+    window.scrollTo({ top: 0 });
+  };
+
+  // Close the user menu on outside click.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const close = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [menuOpen]);
+
+  // On narrow screens the tab row scrolls; show edge fades and keep the active tab in view.
+  const updateNavFade = () => {
+    const nav = navRef.current;
+    if (!nav) return;
+    setNavFade({ left: nav.scrollLeft > 4, right: nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4 });
+  };
+  useEffect(() => {
+    updateNavFade();
+    window.addEventListener('resize', updateNavFade);
+    return () => window.removeEventListener('resize', updateNavFade);
+  }, [navItems]);
+  useEffect(() => {
+    navRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [current.id]);
+
+  const status = STATUS_STYLES[connectionStatus];
+  const statusLabel = connectionStatus === 'connected' && isStale ? 'Stale' : status.label;
+  const alertCount = activeAlerts.length;
+  const initials = (user?.email ?? '?').slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+    <div className="surya-console flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      {/* Ambient glow behind the header */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.10),transparent_60%)]" />
+
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo & Platform Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5 shadow-md shadow-emerald-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5 shadow-lg shadow-emerald-500/20">
               <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
                 <Sun className="h-5 w-5 text-amber-400" />
               </div>
             </div>
-            <div>
-              <span className="text-base font-bold tracking-tight text-white">SURYA</span>
-              <span className="ml-2 hidden text-xs font-medium text-emerald-400 sm:inline-block">
-                Operations Platform
-              </span>
+            <div className="leading-tight">
+              <div className="font-display text-base font-bold tracking-tight text-white">SURYA</div>
+              <div className="hidden text-[11px] font-medium text-emerald-400/90 sm:block">Operations Platform</div>
             </div>
           </div>
 
-          {/* User Profile & Role Badges */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            {onReturnToLanding && (
-              <button
-                onClick={onReturnToLanding}
-                className="hidden sm:flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-amber-400 transition-colors"
-                title="View SURYA Landing Page"
-              >
-                <Home className="h-3.5 w-3.5" />
-                <span>Overview Site</span>
-              </button>
-            )}
+          {/* Active site */}
+          <div className="hidden items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs lg:flex">
+            <span className="relative flex h-2 w-2">
+              {connectionStatus === 'connected' && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
+              <span className={`relative inline-flex h-2 w-2 rounded-full ${status.dot}`} />
+            </span>
+            <span className="font-medium text-slate-200">Prestige University, Indore</span>
+            <span className="text-slate-600">•</span>
+            <span className="text-slate-400">MP Microgrid</span>
+          </div>
 
-            <div className="hidden items-center gap-2 text-xs text-slate-400 lg:flex">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="font-medium text-slate-300">Prestige University, Indore • MP Microgrid</span>
+          {/* Status, clock, alerts, user */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold sm:flex ${status.pill}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+              {statusLabel}
             </div>
-
-            <div className="flex items-center gap-2.5 rounded-full border border-slate-800 bg-slate-800/60 px-3.5 py-1.5 text-xs text-slate-200">
-              <User className="h-3.5 w-3.5 text-slate-400" />
-              <span className="max-w-[140px] truncate font-medium">{user?.email}</span>
-              <span
-                className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                  user?.role === 'admin'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                    : user?.role === 'operator'
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    : 'bg-slate-700 text-slate-300'
-                }`}
-              >
-                {user?.role}
-              </span>
+            <div className="hidden items-center gap-1.5 text-xs font-medium tabular-nums text-slate-400 md:flex">
+              <Clock className="h-3.5 w-3.5 text-slate-500" />
+              {clock} IST
             </div>
-
             <button
-              onClick={logout}
-              title="Sign Out"
-              className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors"
+              onClick={() => selectTab('alerts')}
+              className="relative rounded-xl p-2 text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
+              aria-label={`Alerts${alertCount ? ` (${alertCount} active)` : ''}`}
             >
-              <LogOut className="h-4 w-4" />
+              <Bell className="h-[18px] w-[18px]" />
+              {alertCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-950" />}
             </button>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((value) => !value)}
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-[10px] font-bold text-white">
+                  {initials}
+                </span>
+                <span className="hidden max-w-[160px] truncate text-xs font-medium text-slate-200 md:block">{user?.email}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {menuOpen && (
+                <div role="menu" className="surya-pop absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/50">
+                  <div className="border-b border-white/5 p-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <User className="h-3.5 w-3.5" />
+                      Signed in as
+                    </div>
+                    <div className="mt-1 truncate text-sm font-semibold text-white">{user?.email}</div>
+                    <span
+                      className={`mt-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        user?.role === 'admin'
+                          ? 'border border-purple-500/30 bg-purple-500/20 text-purple-300'
+                          : user?.role === 'operator'
+                          ? 'border border-blue-500/30 bg-blue-500/20 text-blue-300'
+                          : 'bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      {user?.role}
+                    </span>
+                  </div>
+                  <div className="p-1.5">
+                    {onReturnToLanding && (
+                      <button
+                        role="menuitem"
+                        onClick={onReturnToLanding}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/5 hover:text-amber-300"
+                      >
+                        <Home className="h-4 w-4" />
+                        Overview Site
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          selectTab('settings');
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/5 hover:text-white"
+                      >
+                        <SettingsIcon className="h-4 w-4" />
+                        Settings
+                      </button>
+                    )}
+                    <button
+                      role="menuitem"
+                      onClick={logout}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/10"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="mx-auto flex max-w-7xl overflow-x-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-1 border-t border-slate-800/60 py-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id as NavTab)}
-                  className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm'
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
+        <div className="mx-auto max-w-[1600px] px-4 pb-3 sm:px-6 lg:px-8">
+          <div className="relative">
+            {navFade.left && <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 rounded-l-2xl bg-gradient-to-r from-slate-950 to-transparent" />}
+            {navFade.right && <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 rounded-r-2xl bg-gradient-to-l from-slate-950 to-transparent" />}
+            <nav
+              ref={navRef}
+              onScroll={updateNavFade}
+              aria-label="Main navigation"
+              className="surya-tabs flex gap-1 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1"
+            >
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = current.id === item.id;
+                const badge = item.id === 'alerts' && alertCount > 0 ? alertCount : null;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => selectTab(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`group relative flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-[12.5px] font-semibold transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-b from-emerald-500/20 to-emerald-500/5 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.35),0_8px_24px_-12px_rgba(16,185,129,0.6)]'
+                        : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100'
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 flex-shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                    {item.label}
+                    {badge !== null && (
+                      <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
+                    {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
+        <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
       </header>
 
       {/* Connection / Staleness Banner */}
       <ConnectionBanner />
 
       {/* Main Content Viewport */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <ProtectedRoute requiredRole={activeTab === 'settings' ? 'admin' : 'viewer'}>
-          {activeTab === 'overview' ? (
-            <Overview />
-          ) : activeTab === 'forecast' ? (
-            <Forecast />
-          ) : activeTab === 'twin' ? (
-            <DigitalTwin />
-          ) : activeTab === 'optimizer' ? (
-            <Optimizer />
-          ) : activeTab === 'renewables' ? (
-            <Renewables />
-          ) : activeTab === 'battery' ? (
-            <Battery />
-          ) : activeTab === 'grid' ? (
-            <Grid />
-          ) : activeTab === 'scheduler' ? (
-            <Scheduler />
-          ) : activeTab === 'alerts' ? (
-            <Alerts />
-          ) : activeTab === 'reports' ? (
-            <Reports />
-          ) : activeTab === 'settings' ? (
-            <Settings />
-          ) : (
-            <Overview />
-          )}
-        </ProtectedRoute>
+      <main className="relative z-10 mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <div key={current.id} className="surya-page">
+          <ProtectedRoute requiredRole={current.id === 'settings' ? 'admin' : 'viewer'}>
+            {current.id === 'overview' ? (
+              <Overview />
+            ) : current.id === 'forecast' ? (
+              <Forecast />
+            ) : current.id === 'twin' ? (
+              <DigitalTwin />
+            ) : current.id === 'optimizer' ? (
+              <Optimizer />
+            ) : current.id === 'renewables' ? (
+              <Renewables />
+            ) : current.id === 'battery' ? (
+              <Battery />
+            ) : current.id === 'grid' ? (
+              <Grid />
+            ) : current.id === 'scheduler' ? (
+              <Scheduler />
+            ) : current.id === 'alerts' ? (
+              <Alerts />
+            ) : current.id === 'reports' ? (
+              <Reports />
+            ) : current.id === 'settings' ? (
+              <Settings />
+            ) : (
+              <Overview />
+            )}
+          </ProtectedRoute>
+        </div>
       </main>
     </div>
   );
 };
+
 
 const RootApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();

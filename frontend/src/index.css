@@ -56,3 +56,83 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ---------- Operations console polish ---------- */
+.surya-page {
+  animation: suryaRise 0.28s ease-out backwards;
+}
+
+.surya-page h1,
+.surya-page h2 {
+  font-family: "Outfit Variable", Inter, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.surya-pop {
+  animation: navPanelIn 0.16s ease-out both;
+}
+
+/* Slim dark scrollbars that match the console. */
+.surya-console,
+.surya-console * {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.surya-console ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.surya-console ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.surya-console ::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+.surya-console ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Visible focus for keyboard users only. */
+.surya-console button:focus-visible,
+.surya-console a:focus-visible,
+.surya-console input:focus-visible,
+.surya-console select:focus-visible,
+.surya-console textarea:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surya-page,
+  .surya-pop {
+    animation: none;
+  }
+}
+
+/* Tab row scrolls on narrow screens without a visible scrollbar. */
+.surya-console .surya-tabs {
+  scrollbar-width: none;
+}
+
+.surya-console .surya-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ends at `transform: none` so fixed-position children (e.g. full-screen simulator) are not trapped. */
+@keyframes suryaRise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
