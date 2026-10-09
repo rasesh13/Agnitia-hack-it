@@ -55,6 +55,7 @@ export interface AssetCurrentState {
   frequency_hz?: number | null;
   soc_percent?: number | null;
   temperature_celsius?: number | null;
+  wind_speed_ms?: number | null;
   health_percent?: number | null;
   telemetry_quality: TelemetryQuality;
   raw_payload?: Record<string, unknown> | null;

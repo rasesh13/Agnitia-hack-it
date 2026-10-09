@@ -147,6 +147,22 @@ export const Grid: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between rounded-xl bg-slate-950/60 p-3.5 border border-slate-800">
+              <span className="text-slate-400">ML Microgrid Self-Sufficiency</span>
+              <span className="font-mono font-bold text-cyan-400">
+                {aggregates.total_campus_demand_kw > 0
+                  ? `${Math.min(100, (aggregates.total_renewable_generation_kw / aggregates.total_campus_demand_kw) * 100).toFixed(1)}%`
+                  : '100%'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl bg-slate-950/60 p-3.5 border border-slate-800">
+              <span className="text-slate-400">Real-Time Grid Exchange</span>
+              <span className={`font-mono font-bold ${gridPower < -0.1 ? 'text-emerald-400' : gridPower > 0.1 ? 'text-amber-400' : 'text-slate-300'}`}>
+                {gridPower < -0.1 ? `Exporting ${Math.abs(gridPower).toFixed(1)} kW` : gridPower > 0.1 ? `Importing ${gridPower.toFixed(1)} kW` : '0.0 kW (Islanded Balance)'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl bg-slate-950/60 p-3.5 border border-slate-800">
               <span className="text-slate-400">Net Metering Mode</span>
               <span className="flex items-center gap-1 font-semibold text-purple-300">
                 <ShieldCheck className="h-3.5 w-3.5 text-purple-400" />

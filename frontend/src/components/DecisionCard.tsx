@@ -88,7 +88,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({ decision, onViewAlte
 
       {/* Main Rationale Paragraph */}
       <div className="mt-3">
-        <p className="text-xs text-slate-300 leading-relaxed font-sans">{decision.reason}</p>
+        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+          {(decision.reason || '').replace(/[?]1/g, '₹')}
+        </p>
       </div>
 
       {/* Impact & Allocation Metrics */}

@@ -5,7 +5,6 @@ import { BuildingCard } from '../components/BuildingCard';
 import { AssetDetailModal } from '../components/AssetDetailModal';
 import { QualityBadge, OperationalStatusBadge } from '../components/StatusBadge';
 import { FreshnessIndicator } from '../components/FreshnessIndicator';
-import { MLTelemetryController } from '../components/MLTelemetryController';
 import {
   RefreshCw,
   Sun,
@@ -24,7 +23,7 @@ import {
 const SIMULATOR_URL = '/simulator/index.html?embed=1#prestige-university';
 
 export const DigitalTwin: React.FC = () => {
-  const { site, assets, isStale, stalenessSeconds, refresh, isLoading, aggregates } = useLiveTwin(1);
+  const { site, assets, isStale, stalenessSeconds, refresh, isLoading } = useLiveTwin(1);
   const [selectedAsset, setSelectedAsset] = useState<AssetRead | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -120,13 +119,6 @@ export const DigitalTwin: React.FC = () => {
         </div>
       </div>
 
-      {/* ML Telemetry Reset-to-Zero and Real-Life Prediction Controller */}
-      <MLTelemetryController
-        siteId={site?.id || 1}
-        onRefreshState={refresh}
-        currentRenewableKw={aggregates.total_renewable_generation_kw}
-        currentDemandKw={aggregates.total_campus_demand_kw}
-      />
 
       {/* 3D Campus Simulator */}
       <div

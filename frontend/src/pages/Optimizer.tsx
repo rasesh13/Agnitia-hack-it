@@ -3,6 +3,9 @@ import { apiDecisions } from '../services/api';
 import { DecisionAlternative, DecisionLog, DecisionStats } from '../types';
 import { DecisionCard } from '../components/DecisionCard';
 import { AlternativesModal } from '../components/AlternativesModal';
+import { MLTelemetryController } from '../components/MLTelemetryController';
+import { useLiveTwin } from '../hooks/useLiveTwin';
+import { FreshnessIndicator } from '../components/FreshnessIndicator';
 import {
   Zap,
   TrendingUp,
@@ -13,11 +16,15 @@ import {
   Layers,
   Loader2,
   ChevronDown,
+  Sun,
+  Battery,
+  Activity,
 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
 export const Optimizer: React.FC = () => {
+  const { aggregates, refresh: refreshTwin, isStale, stalenessSeconds } = useLiveTwin(1);
   const [decisions, setDecisions] = useState<DecisionLog[]>([]);
   const [stats, setStats] = useState<DecisionStats | null>(null);
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -78,14 +85,118 @@ export const Optimizer: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={loadData}
-          disabled={isLoading}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh History</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <FreshnessIndicator isStale={isStale} stalenessSeconds={stalenessSeconds} />
+          <button
+            onClick={() => {
+              refreshTwin();
+              loadData();
+            }}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh History</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ML Model Live Telemetry & Zero Baseline Controller */}
+      <MLTelemetryController
+        siteId={1}
+        onRefreshState={async () => {
+          await refreshTwin();
+          await loadData();
+        }}
+        currentRenewableKw={aggregates.total_renewable_generation_kw}
+        currentDemandKw={aggregates.total_campus_demand_kw}
+      />
+
+      {/* ML Live Optimization Context */}
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                  ML Live Optimization Context
+                </h2>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
+                  Continuous 10s Dispatch
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-400">
+                LightGBM renewable forecast inputs driving least-cost, carbon-minimized battery & grid setpoints.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-300 font-mono">
+            <span className="rounded-lg bg-slate-950/80 px-3 py-1.5 border border-slate-800">
+              Weights: <b className="text-emerald-400">60% Cost</b> • <b className="text-blue-400">40% Carbon</b>
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-center">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold text-slate-500">
+              <Sun className="h-3 w-3 text-amber-400" />
+              ML Renewable Yield
+            </div>
+            <div className="text-lg font-bold text-amber-300 mt-1">
+              {aggregates.total_renewable_generation_kw.toFixed(1)} kW
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              Solar: {aggregates.total_solar_generation_kw.toFixed(1)} kW | Wind: {aggregates.total_wind_generation_kw.toFixed(1)} kW
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold text-slate-500">
+              <Zap className="h-3 w-3 text-rose-400" />
+              Campus Load
+            </div>
+            <div className="text-lg font-bold text-rose-300 mt-1">
+              {aggregates.total_campus_demand_kw.toFixed(1)} kW
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              Net balance: {(aggregates.total_renewable_generation_kw - aggregates.total_campus_demand_kw).toFixed(1)} kW
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold text-slate-500">
+              <Battery className="h-3 w-3 text-purple-400" />
+              BESS Dispatch Action
+            </div>
+            <div className="text-lg font-bold text-purple-300 mt-1">
+              {aggregates.total_battery_power_kw < 0
+                ? `Charging ${Math.abs(aggregates.total_battery_power_kw).toFixed(1)} kW`
+                : aggregates.total_battery_power_kw > 0
+                ? `Discharging ${aggregates.total_battery_power_kw.toFixed(1)} kW`
+                : 'Standby / Balanced'}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              SoC: {aggregates.average_battery_soc_percent.toFixed(0)}% (Reserve: 20%)
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold text-slate-500">
+              <Leaf className="h-3 w-3 text-emerald-400" />
+              Avoided CO₂ Rate
+            </div>
+            <div className="text-lg font-bold text-emerald-300 mt-1">
+              {(aggregates.total_renewable_generation_kw * 0.82).toFixed(1)} kg/h
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              Grid Factor: 0.82 kg/kWh
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Aggregate Impact Banner */}

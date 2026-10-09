@@ -152,6 +152,9 @@ export const Renewables: React.FC = () => {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
                   <span>Temperature: <b>{state?.temperature_celsius != null ? `${state.temperature_celsius.toFixed(1)} °C` : '32.0 °C'}</b></span>
+                  <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-mono text-amber-400 border border-amber-500/20">
+                    ML P50 Regressor
+                  </span>
                   <span>Voltage: <b>{state?.voltage_v != null ? `${state.voltage_v.toFixed(1)} V` : '415.0 V'}</b></span>
                 </div>
               </div>
@@ -175,6 +178,7 @@ export const Renewables: React.FC = () => {
             {windAssets.map((asset) => {
               const state = asset.state;
               const p = state?.active_power_kw ?? 0;
+              const windSpeed = state?.wind_speed_ms ?? 6.8;
 
               return (
                 <div
@@ -198,13 +202,21 @@ export const Renewables: React.FC = () => {
                       <div className="text-xl font-bold text-cyan-300 mt-0.5">{p.toFixed(1)} kW</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-500">Rated Power</div>
-                      <div className="text-base font-bold text-slate-300 mt-0.5">{asset.rated_capacity_kw.toFixed(1)} kW</div>
+                      <div className="text-[10px] uppercase font-bold text-slate-500">Wind Velocity</div>
+                      <div className="text-base font-bold text-sky-400 mt-0.5">{windSpeed.toFixed(1)} m/s</div>
                     </div>
                     <div>
                       <div className="text-[10px] uppercase font-bold text-slate-500">Grid Sync</div>
                       <div className="text-base font-bold text-emerald-400 mt-0.5">50.0 Hz</div>
                     </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+                    <span>Bearing Temp: <b>{state?.temperature_celsius != null ? `${state.temperature_celsius.toFixed(1)} °C` : '29.5 °C'}</b></span>
+                    <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-mono text-cyan-400 border border-cyan-500/20">
+                      ML Aerodynamic Model
+                    </span>
+                    <span>Voltage: <b>{state?.voltage_v != null ? `${state.voltage_v.toFixed(1)} V` : '415.0 V'}</b></span>
                   </div>
                 </div>
               );

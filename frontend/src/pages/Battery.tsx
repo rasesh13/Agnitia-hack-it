@@ -167,6 +167,12 @@ export const Battery: React.FC = () => {
                         <span className="font-mono font-bold text-slate-200">{(asset.rated_capacity_kw * 0.5).toFixed(1)} kW (0.5C)</span>
                       </div>
                       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span className="text-slate-400">ML Dispatch Setpoint</span>
+                        <span className="rounded bg-purple-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-purple-300 border border-purple-500/20">
+                          {power < -0.1 ? `Charging (${Math.abs(power).toFixed(1)} kW)` : power > 0.1 ? `Discharging (${power.toFixed(1)} kW)` : 'Float / Reserve'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                         <span className="text-slate-400">Round-trip Efficiency</span>
                         <span className="font-mono font-bold text-emerald-400">92.5%</span>
                       </div>
