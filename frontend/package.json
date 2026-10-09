@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:simulator": "npm --prefix ../simulator ci && npm --prefix ../simulator run build -- --outDir ../frontend/public/simulator --emptyOutDir",
     "lint": "eslint . --ext ts,tsx --rule \"@typescript-eslint/no-explicit-any: off\" --rule \"react-hooks/exhaustive-deps: off\" --rule \"react-refresh/only-export-components: off\" --max-warnings 0",
     "preview": "vite preview"
   },
