@@ -12,6 +12,7 @@ import {
   Info,
   LineChart as LineChartIcon,
 } from 'lucide-react';
+import { MLTelemetryController } from '../components/MLTelemetryController';
 
 const formatMetric = (value?: number | null) => (value === undefined || value === null ? '—' : value.toLocaleString());
 
@@ -173,6 +174,14 @@ export const Forecast: React.FC = () => {
         </div>
       </div>
 
+      {/* ML Telemetry Reset-to-Zero and Real-Life Prediction Controller */}
+      <MLTelemetryController
+        siteId={1}
+        onRefreshState={() => fetchForecast('central_india_mp_indore')}
+        currentRenewableKw={data?.grid_implication?.avg_generation || 0}
+        currentDemandKw={data?.grid_implication?.avg_demand || 0}
+      />
+
       {/* Target Selector Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
         {[
@@ -282,7 +291,11 @@ export const Forecast: React.FC = () => {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="h-0.5 w-3 bg-red-500 border-b border-dashed border-red-400" />
+              <span className="text-red-400 font-mono font-medium">Pre-ML Zero Baseline (0.0 kW)</span>
+            </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-amber-400" />
               <span className="text-slate-300">ML Forecast (P50)</span>
@@ -312,6 +325,9 @@ export const Forecast: React.FC = () => {
             {[25, 50, 75].map((y) => (
               <line key={y} x1="0" y1={y} x2={series.length} y2={y} stroke="rgba(255,255,255,0.05)" strokeDasharray="2" />
             ))}
+
+            {/* Zero Baseline Line at y=0 kW (bottom of chart) */}
+            <line x1="0" y1="99.5" x2={series.length} y2="99.5" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" />
 
             {/* Uncertainty Area (P10 to P90) */}
             {hasSeries && series.length > 1 && (

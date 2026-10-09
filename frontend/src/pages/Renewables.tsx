@@ -10,6 +10,7 @@ import {
   Gauge,
   RefreshCw,
 } from 'lucide-react';
+import { MLTelemetryController } from '../components/MLTelemetryController';
 
 export const Renewables: React.FC = () => {
   const { assets, aggregates, isStale, stalenessSeconds, refresh, isLoading } = useLiveTwin(1);
@@ -50,6 +51,14 @@ export const Renewables: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ML Model Live Telemetry & Zero Baseline Controller */}
+      <MLTelemetryController
+        siteId={1}
+        onRefreshState={refresh}
+        currentRenewableKw={aggregates.total_renewable_generation_kw}
+        currentDemandKw={aggregates.total_campus_demand_kw}
+      />
 
       {/* Renewable KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -6,6 +6,7 @@ import { MetricCard } from '../components/MetricCard';
 import { PowerFlowDiagram } from '../components/PowerFlowDiagram';
 import { FreshnessIndicator } from '../components/FreshnessIndicator';
 import { SeverityBadge } from '../components/StatusBadge';
+import { MLTelemetryController } from '../components/MLTelemetryController';
 import { apiControl, apiDecisions } from '../services/api';
 import { DecisionCycle, DecisionStats } from '../types';
 import {
@@ -26,7 +27,7 @@ import {
 export const Overview: React.FC = () => {
   const { isOperator } = useAuth();
   const { aggregates, isStale, stalenessSeconds, refresh, isLoading } = useLiveTwin(1);
-  const { latestCycle: wsCycle, activeAlerts, dismissAlert, lastMessageAt } = useWebSocket();
+  const { latestCycle: wsCycle, activeAlerts, dismissAlert, lastMessageAt, liveFluctuation } = useWebSocket();
 
   const [cycle, setCycle] = useState<DecisionCycle | null>(null);
   const [stats, setStats] = useState<DecisionStats | null>(null);
@@ -165,57 +166,110 @@ export const Overview: React.FC = () => {
         </div>
       )}
 
+      {/* ML Telemetry Reset-to-Zero and Real-Life Prediction Controller */}
+      <MLTelemetryController
+        siteId={1}
+        onRefreshState={async () => {
+          await refresh();
+          await fetchLatestCycle();
+          await fetchStats();
+          await fetchMlForecast();
+        }}
+        currentRenewableKw={aggregates?.total_renewable_generation_kw ?? 0}
+        currentDemandKw={aggregates?.total_campus_demand_kw ?? 0}
+      />
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Renewable Power"
-          value={aggregates.total_renewable_generation_kw.toFixed(1)}
+          value={(aggregates?.total_renewable_generation_kw ?? 0).toFixed(1)}
           unit="kW"
-          subtitle={`Solar: ${aggregates.total_solar_generation_kw.toFixed(1)} kW | Wind: ${aggregates.total_wind_generation_kw.toFixed(1)} kW`}
+          subtitle={`Solar: ${(aggregates?.total_solar_generation_kw ?? 0).toFixed(1)} kW | Wind: ${(aggregates?.total_wind_generation_kw ?? 0).toFixed(1)} kW`}
           icon={Sun}
           iconColor="text-amber-400"
           iconBg="bg-amber-500/10 border-amber-500/20"
+          trend={
+            liveFluctuation?.generation_delta_kw !== undefined
+              ? {
+                  value: `${liveFluctuation.generation_delta_kw >= 0 ? '+' : ''}${liveFluctuation.generation_delta_kw.toFixed(1)} kW`,
+                  isPositive: liveFluctuation.generation_delta_kw >= 0,
+                  label: 'jitter',
+                }
+              : undefined
+          }
+          badge={
+            liveFluctuation ? (
+              <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-mono text-amber-400 border border-amber-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+                Live Jitter
+              </span>
+            ) : undefined
+          }
         />
 
         <MetricCard
           title="Campus Total Load"
-          value={aggregates.total_campus_demand_kw.toFixed(1)}
+          value={(aggregates?.total_campus_demand_kw ?? 0).toFixed(1)}
           unit="kW"
           subtitle="Academic, Hostels & Common facilities"
           icon={Zap}
           iconColor="text-rose-400"
           iconBg="bg-rose-500/10 border-rose-500/20"
+          trend={
+            liveFluctuation?.demand_delta_kw !== undefined
+              ? {
+                  value: `${liveFluctuation.demand_delta_kw >= 0 ? '+' : ''}${liveFluctuation.demand_delta_kw.toFixed(1)} kW`,
+                  isPositive: liveFluctuation.demand_delta_kw <= 0,
+                  label: 'load step',
+                }
+              : undefined
+          }
         />
 
         <MetricCard
           title="Battery State of Charge"
-          value={aggregates.average_battery_soc_percent.toFixed(0)}
+          value={(aggregates?.average_battery_soc_percent ?? 75).toFixed(0)}
           unit="%"
-          subtitle={`Flow: ${aggregates.total_battery_power_kw > 0 ? '+' : ''}${aggregates.total_battery_power_kw.toFixed(1)} kW`}
+          subtitle={`Flow: ${(aggregates?.total_battery_power_kw ?? 0) > 0 ? '+' : ''}${(aggregates?.total_battery_power_kw ?? 0).toFixed(1)} kW`}
           icon={Battery}
           iconColor="text-purple-400"
           iconBg="bg-purple-500/10 border-purple-500/20"
+          badge={
+            liveFluctuation ? (
+              <span className="inline-flex items-center gap-1 rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-mono text-purple-300 border border-purple-500/20">
+                BESS Compensating
+              </span>
+            ) : undefined
+          }
         />
 
         <MetricCard
           title="Net Grid Power Flow"
-          value={Math.abs(aggregates.net_grid_exchange_kw).toFixed(1)}
+          value={Math.abs(aggregates?.net_grid_exchange_kw ?? 0).toFixed(1)}
           unit="kW"
-          subtitle={aggregates.net_grid_exchange_kw > 0 ? 'Importing from Grid' : aggregates.net_grid_exchange_kw < 0 ? 'Exporting to Grid' : 'Zero Net Flow'}
+          subtitle={(aggregates?.net_grid_exchange_kw ?? 0) > 0 ? 'Importing from Grid' : (aggregates?.net_grid_exchange_kw ?? 0) < 0 ? 'Exporting to Grid' : 'Zero Net Flow (Islanded)'}
           icon={UtilityPole}
           iconColor="text-blue-400"
           iconBg="bg-blue-500/10 border-blue-500/20"
+          badge={
+            liveFluctuation ? (
+              <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-mono text-emerald-400 border border-emerald-500/30">
+                Balanced
+              </span>
+            ) : undefined
+          }
         />
       </div>
 
       {/* Interactive Power Flow Diagram */}
       <PowerFlowDiagram
-        solarKw={aggregates.total_solar_generation_kw}
-        windKw={aggregates.total_wind_generation_kw}
-        demandKw={aggregates.total_campus_demand_kw}
-        batteryKw={aggregates.total_battery_power_kw}
-        batterySoc={aggregates.average_battery_soc_percent}
-        netGridKw={aggregates.net_grid_exchange_kw}
+        solarKw={aggregates?.total_solar_generation_kw ?? 0}
+        windKw={aggregates?.total_wind_generation_kw ?? 0}
+        demandKw={aggregates?.total_campus_demand_kw ?? 0}
+        batteryKw={aggregates?.total_battery_power_kw ?? 0}
+        batterySoc={aggregates?.average_battery_soc_percent ?? 75}
+        netGridKw={aggregates?.net_grid_exchange_kw ?? 0}
       />
 
       {/* Agnitia ML Forecast Forward Intelligence Card */}
