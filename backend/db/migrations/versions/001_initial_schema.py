@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("password_hash", sa.String(length=255), nullable=True),
         sa.Column("google_sub", sa.String(length=255), nullable=True),
         sa.Column("role", sa.String(length=20), nullable=False, server_default="viewer"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("token_version", sa.Integer(), nullable=False, server_default=sa.text("1")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -67,7 +67,7 @@ def upgrade() -> None:
         ),
         sa.Column("rated_capacity_kw", sa.Float(), nullable=True),
         sa.Column("adapter_mapping", sa.String(length=255), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
@@ -147,7 +147,7 @@ def upgrade() -> None:
         sa.Column("threshold_value", sa.Float(), nullable=False),
         sa.Column("unit", sa.String(length=20), nullable=False),
         sa.Column("severity", sa.String(length=20), nullable=False, server_default="warning"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column(
             "updated_by_user_id",
             sa.Integer(),

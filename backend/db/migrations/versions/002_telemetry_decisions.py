@@ -201,7 +201,7 @@ def upgrade() -> None:
             "is_selected",
             sa.Boolean(),
             nullable=False,
-            server_default=sa.text("0"),
+            server_default=sa.text("false"),
         ),
         sa.Column("rejected_reason", sa.String(length=255), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
