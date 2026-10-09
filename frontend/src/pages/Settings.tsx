@@ -173,7 +173,14 @@ export const Settings: React.FC = () => {
     setIsSaving(true);
     setStatusMessage(null);
     try {
-      const updated = await apiSettings.updateControlPolicy(policy);
+      // Send only what this form edits; the emergency stop has its own control and must not be
+      // overwritten by a value loaded before someone else triggered it.
+      const updated = await apiSettings.updateControlPolicy({
+        closed_loop_enabled: policy.closed_loop_enabled,
+        cost_weight: policy.cost_weight,
+        carbon_weight: policy.carbon_weight,
+        decision_cycle_seconds: policy.decision_cycle_seconds,
+      });
       setPolicy(updated);
       setStatusMessage({ success: true, text: 'Control policy parameters successfully saved.' });
       setTimeout(() => setStatusMessage(null), 3000);
