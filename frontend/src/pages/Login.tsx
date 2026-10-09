@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { SuryaMark } from '@/components/SuryaMark';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 interface LoginProps {
   onNavigateSignup: () => void;
@@ -10,7 +11,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLanding, onSuccess }) => {
-  const { login, error, clearError } = useAuth();
+  const { login, loginWithGoogle, error, clearError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -140,6 +141,26 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
             ⚡ 1-Click Demo Login (Prestige University Admin)
           </button>
         </form>
+
+        {/* Google sign-in */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <span className="h-px flex-1 bg-slate-800" />
+            or
+            <span className="h-px flex-1 bg-slate-800" />
+          </div>
+          <GoogleSignInButton
+            onCredential={async (idToken) => {
+              clearError();
+              try {
+                await loginWithGoogle(idToken);
+                if (onSuccess) onSuccess();
+              } catch {
+                // Error is shown by the auth context.
+              }
+            }}
+          />
+        </div>
 
         {/* Footer info */}
         <div className="pt-2 text-center text-xs text-slate-400 space-y-2">
