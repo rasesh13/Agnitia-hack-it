@@ -36,7 +36,7 @@ async def test_db():
 
 @pytest.fixture
 async def seed_data(test_db):
-    now = datetime(2026, 10, 8, 14, 0, 0, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
     async with test_db() as session:
         # Create test user
         user = User(
