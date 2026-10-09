@@ -63,6 +63,7 @@ export const Grid: React.FC = () => {
       {/* ML Model Live Telemetry & Zero Baseline Controller */}
       <MLTelemetryController
         siteId={1}
+        category="grid"
         onRefreshState={refresh}
         currentRenewableKw={aggregates.total_renewable_generation_kw}
         currentDemandKw={aggregates.total_campus_demand_kw}

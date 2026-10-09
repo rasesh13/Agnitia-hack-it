@@ -169,6 +169,7 @@ export const Overview: React.FC = () => {
       {/* ML Telemetry Reset-to-Zero and Real-Life Prediction Controller */}
       <MLTelemetryController
         siteId={1}
+        category="overview"
         onRefreshState={async () => {
           await refresh();
           await fetchLatestCycle();

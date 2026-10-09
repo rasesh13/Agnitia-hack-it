@@ -104,6 +104,7 @@ export const Optimizer: React.FC = () => {
       {/* ML Model Live Telemetry & Zero Baseline Controller */}
       <MLTelemetryController
         siteId={1}
+        category="optimizer"
         onRefreshState={async () => {
           await refreshTwin();
           await loadData();

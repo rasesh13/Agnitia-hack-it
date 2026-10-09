@@ -271,6 +271,7 @@ export const Forecast: React.FC = () => {
       {/* ML Telemetry Reset-to-Zero and Real-Life Prediction Controller */}
       <MLTelemetryController
         siteId={1}
+        category="forecast"
         onRefreshState={() => fetchForecast('central_india_mp_indore')}
         currentRenewableKw={data?.grid_implication?.avg_generation || 0}
         currentDemandKw={data?.grid_implication?.avg_demand || 0}

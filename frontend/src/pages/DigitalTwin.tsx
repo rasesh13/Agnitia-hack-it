@@ -5,6 +5,7 @@ import { BuildingCard } from '../components/BuildingCard';
 import { AssetDetailModal } from '../components/AssetDetailModal';
 import { QualityBadge, OperationalStatusBadge } from '../components/StatusBadge';
 import { FreshnessIndicator } from '../components/FreshnessIndicator';
+import { MLTelemetryController } from '../components/MLTelemetryController';
 import {
   RefreshCw,
   Sun,
@@ -119,6 +120,12 @@ export const DigitalTwin: React.FC = () => {
         </div>
       </div>
 
+      {/* ML Telemetry Digital Twin State Estimation Controller */}
+      <MLTelemetryController
+        siteId={1}
+        category="twin"
+        onRefreshState={refresh}
+      />
 
       {/* 3D Campus Simulator */}
       <div
