@@ -17,12 +17,15 @@ from __future__ import annotations
 import json
 import logging
 import math
+import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
+import pandas as pd
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,49 @@ REGIONAL_DIR = MODEL_DIR / "regional"
 METRICS_FILE = MODEL_DIR / "evaluation_metrics.json"
 REGIONAL_METRICS_FILE = REGIONAL_DIR / "regional_evaluation_metrics.json"
 FEATURE_META_FILE = MODEL_DIR / "feature_metadata.json"
+
+REGIONAL_COORDINATES: Dict[str, Dict[str, Any]] = {
+    "central_india_mp_indore": {
+        "lat": 22.7196,
+        "lon": 75.8577,
+        "name": "Prestige University, Indore (Malwa Microgrid)",
+        "solar_capacity_kw": 300.0,
+        "wind_capacity_kw": 120.0,
+        "grid_emission_factor": 0.74,
+    },
+    "western_india_gujarat": {
+        "lat": 23.2156,
+        "lon": 72.6369,
+        "name": "Charanka Solar Park, Gujarat",
+        "solar_capacity_kw": 500.0,
+        "wind_capacity_kw": 200.0,
+        "grid_emission_factor": 0.69,
+    },
+    "southern_india_tamil_nadu": {
+        "lat": 8.3529,
+        "lon": 77.6083,
+        "name": "Muppandal Wind Farm, Tamil Nadu",
+        "solar_capacity_kw": 200.0,
+        "wind_capacity_kw": 300.0,
+        "grid_emission_factor": 0.71,
+    },
+    "northern_india_rajasthan": {
+        "lat": 27.5028,
+        "lon": 71.9178,
+        "name": "Bhadla Solar Park, Rajasthan",
+        "solar_capacity_kw": 600.0,
+        "wind_capacity_kw": 150.0,
+        "grid_emission_factor": 0.78,
+    },
+    "all_india_grid": {
+        "lat": 22.7196,
+        "lon": 75.8577,
+        "name": "National SCADA Central Reference",
+        "solar_capacity_kw": 300.0,
+        "wind_capacity_kw": 120.0,
+        "grid_emission_factor": 0.74,
+    },
+}
 
 
 class HorizonPoint(BaseModel):
@@ -211,6 +257,8 @@ class AgnitiaMLForecaster:
         self.metrics: Dict[str, Any] = {}
         self.regional_metrics: Dict[str, Any] = {}
         self.feature_columns: List[str] = []
+        self._weather_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+        self._weather_cache_ttl: float = 60.0  # Cache Open-Meteo live readings for 60 seconds
         self._load_artifacts()
 
     def _load_artifacts(self):
@@ -234,6 +282,14 @@ class AgnitiaMLForecaster:
                         m_path = MODEL_DIR / f"{target}_{model_type}_{q}.joblib"
                         if m_path.exists():
                             self.models[f"{target}_{model_type}_{q}"] = joblib.load(m_path)
+
+            # Load regional microgrid models (Central India - Indore)
+            for q in ["p10", "p50", "p90"]:
+                for prefix in ["central_india_mp_indore"]:
+                    for mod in ["solar_lgb", "solar", "wind_lgb", "wind"]:
+                        m_path = REGIONAL_DIR / f"{prefix}_{mod}_{q}.joblib"
+                        if m_path.exists():
+                            self.models[f"{prefix}_{mod}_{q}"] = joblib.load(m_path)
 
             logger.info(f"Loaded {len(self.models)} Agnitia ML model checkpoints successfully.")
         except Exception as e:
@@ -460,6 +516,314 @@ class AgnitiaMLForecaster:
                 "carbon_intensity_offset_tons": round(float((avg_gen * (1000 if unit == "MW" else 1.0) * emission_factor * horizon_hours) / 1000.0), 2),
             },
         )
+
+    def get_realtime_weather(
+        self,
+        region_id: str = "central_india_mp_indore",
+        force_refresh: bool = False,
+    ) -> Dict[str, Any]:
+        """Fetches real-life weather from Open-Meteo API for the site coordinates with 60-second caching.
+        Falls back smoothly to continuous atmospheric physics if network is temporarily unreachable.
+        """
+        now_ts = time.time()
+        if not force_refresh and region_id in self._weather_cache:
+            cache_time, cached_data = self._weather_cache[region_id]
+            if now_ts - cache_time < self._weather_cache_ttl:
+                return cached_data
+
+        cfg = REGIONAL_COORDINATES.get(region_id, REGIONAL_COORDINATES["central_india_mp_indore"])
+        lat = cfg["lat"]
+        lon = cfg["lon"]
+
+        url = (
+            f"https://api.open-meteo.com/v1/forecast?"
+            f"latitude={lat}&longitude={lon}"
+            f"&current=temperature_2m,relative_humidity_2m,direct_normal_irradiance,diffuse_radiation,shortwave_radiation,wind_speed_10m,wind_direction_10m,cloud_cover"
+            f"&timezone=Asia%2FKolkata"
+        )
+
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "AgnitiaVPP/2.0"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                raw_json = json.loads(resp.read().decode("utf-8"))
+            curr = raw_json.get("current", {})
+            wind_kmh = float(curr.get("wind_speed_10m") if curr.get("wind_speed_10m") is not None else 8.0)
+            wind_mps = round(wind_kmh / 3.6, 2)
+            ghi = float(curr.get("shortwave_radiation") if curr.get("shortwave_radiation") is not None else 0.0)
+            dni = float(curr.get("direct_normal_irradiance") if curr.get("direct_normal_irradiance") is not None else 0.0)
+            dhi = float(curr.get("diffuse_radiation") if curr.get("diffuse_radiation") is not None else 0.0)
+            temp = float(curr.get("temperature_2m") if curr.get("temperature_2m") is not None else 30.0)
+            humidity = float(curr.get("relative_humidity_2m") if curr.get("relative_humidity_2m") is not None else 35.0)
+            wind_dir = float(curr.get("wind_direction_10m") if curr.get("wind_direction_10m") is not None else 240.0)
+            cloud = float(curr.get("cloud_cover") if curr.get("cloud_cover") is not None else 10.0)
+
+            result = {
+                "region_id": region_id,
+                "location_name": cfg["name"],
+                "latitude": lat,
+                "longitude": lon,
+                "temp_c": temp,
+                "relative_humidity_2m": humidity,
+                "ghi_wm2": ghi,
+                "dni_wm2": dni,
+                "dhi_wm2": dhi,
+                "wind_speed_mps": wind_mps,
+                "wind_direction_10m": wind_dir,
+                "cloud_pct": cloud,
+                "source": "Open-Meteo Real-Time NWP API",
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "is_live_api": True,
+            }
+            self._weather_cache[region_id] = (now_ts, result)
+            return result
+        except Exception as e:
+            logger.warning("Failed fetching live weather from Open-Meteo for %s (%s). Falling back to cached/model.", region_id, e)
+            if region_id in self._weather_cache:
+                return self._weather_cache[region_id][1]
+
+            ist_now = datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)
+            hour = ist_now.hour + ist_now.minute / 60.0
+            solar_elev = max(0.0, math.sin(max(0.0, min(math.pi, (hour - 6.0) / 12.0 * math.pi))))
+            return {
+                "region_id": region_id,
+                "location_name": cfg["name"],
+                "latitude": lat,
+                "longitude": lon,
+                "temp_c": round(28.0 + 5.0 * solar_elev, 1),
+                "relative_humidity_2m": 35.0,
+                "ghi_wm2": round(850.0 * solar_elev, 1),
+                "dni_wm2": round(750.0 * (solar_elev ** 1.2), 1),
+                "dhi_wm2": round(100.0 * solar_elev, 1),
+                "wind_speed_mps": 3.8,
+                "wind_direction_10m": 240.0,
+                "cloud_pct": 10.0,
+                "source": "Atmospheric Diurnal Solar Physics Fallback",
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "is_live_api": False,
+            }
+
+    def predict_realtime_point(
+        self,
+        region_id: str = "central_india_mp_indore",
+        target_dt: Optional[datetime] = None,
+        custom_weather: Optional[Dict[str, float]] = None,
+        simulate_daylight_peak: bool = False,
+    ) -> Dict[str, Any]:
+        """Runs live feature engineering & LightGBM inference on regional microgrid models.
+        Converts real-life environmental features into authentic Solar PV generation, Wind generation,
+        campus load, and battery dispatch setpoints.
+        """
+        if target_dt is None:
+            target_dt = datetime.now(timezone.utc)
+
+        ist_hour = (target_dt.hour + (target_dt.minute / 60.0) + 5.5) % 24.0
+        month = target_dt.month
+
+        # Fetch live real-time weather from Open-Meteo if custom_weather is not explicitly supplied
+        if custom_weather is None:
+            live_weather = self.get_realtime_weather(region_id=region_id)
+        else:
+            live_weather = custom_weather
+
+        # In case daylight peak simulation is requested (e.g. night-time demonstration)
+        effective_hour = 13.5 if (simulate_daylight_peak and live_weather.get("ghi_wm2", 0) <= 0.0) else ist_hour
+
+        hour_sin = math.sin(2 * math.pi * effective_hour / 24.0)
+        hour_cos = math.cos(2 * math.pi * effective_hour / 24.0)
+        month_sin = math.sin(2 * math.pi * month / 12.0)
+        month_cos = math.cos(2 * math.pi * month / 12.0)
+
+        # Environmental parameters directly from live weather API
+        solar_elev = max(0.0, math.sin(max(0.0, min(math.pi, (effective_hour - 6.0) / 12.0 * math.pi))))
+
+        ghi = float(live_weather.get("ghi_wm2", round(920.0 * solar_elev, 1)))
+        if simulate_daylight_peak and ghi <= 0.0:
+            ghi = round(860.0 * math.sin(math.pi / 2.0 * 0.95), 1)
+
+        dni = float(live_weather.get("dni_wm2", round(810.0 * (solar_elev ** 1.2), 1)))
+        if simulate_daylight_peak and dni <= 0.0:
+            dni = round(780.0 * 0.95, 1)
+
+        dhi = float(live_weather.get("dhi_wm2", max(0.0, round(ghi - dni * solar_elev, 1))))
+        wind_speed = float(live_weather.get("wind_speed_mps", round(4.5 + 1.2 * math.sin((effective_hour - 13) / 12 * math.pi), 1)))
+        if simulate_daylight_peak and wind_speed < 4.5:
+            wind_speed = round(5.2 + 0.8 * math.sin((effective_hour - 13) / 12 * math.pi), 1)
+
+        temp_c = float(live_weather.get("temp_c", round(28.0 + 5.0 * math.sin((effective_hour - 9) / 12 * math.pi), 1)))
+        cloud_pct = float(live_weather.get("cloud_pct", 10.0))
+
+        # First-Principles Physics Baselines (Indore Microgrid: 300 kW Solar PV, 120 kW Micro-Wind)
+        t_cell = temp_c + 0.03 * ghi
+        temp_derate = 1.0 - 0.004 * max(0.0, t_cell - 25.0)
+        solar_physics_kw = max(0.0, round(300.0 * (ghi / 1000.0) * 0.85 * temp_derate, 2))
+
+        v = wind_speed
+        if v < 1.5:
+            w_ratio = 0.0
+        elif v < 12.0:
+            w_ratio = (v**2.5 - 1.5**2.5) / (12.0**2.5 - 1.5**2.5)
+        elif v < 25.0:
+            w_ratio = 1.0
+        else:
+            w_ratio = 0.0
+        wind_physics_kw = max(0.0, round(120.0 * w_ratio, 2))
+
+        features = {
+            "hour_sin": [hour_sin],
+            "hour_cos": [hour_cos],
+            "month_sin": [month_sin],
+            "month_cos": [month_cos],
+            "ghi_wm2": [ghi],
+            "dni_wm2": [dni],
+            "dhi_wm2": [dhi],
+            "wind_speed_mps": [wind_speed],
+            "temp_c": [temp_c],
+            "cloud_pct": [cloud_pct],
+            "solar_physics_kw": [solar_physics_kw],
+            "wind_physics_kw": [wind_physics_kw],
+            "ghi_wm2_lag1": [round(max(0.0, ghi * 0.94), 1)],
+            "ghi_wm2_lag24": [ghi],
+            "ghi_wm2_roll6_mean": [round(max(0.0, ghi * 0.88), 1)],
+            "wind_speed_mps_lag1": [round(max(0.0, wind_speed * 0.96), 1)],
+            "wind_speed_mps_lag24": [wind_speed],
+            "wind_speed_mps_roll6_mean": [round(max(0.0, wind_speed * 0.98), 1)],
+            "temp_c_lag1": [round(temp_c - 0.4, 1)],
+            "temp_c_lag24": [temp_c],
+            "temp_c_roll6_mean": [round(temp_c - 1.2, 1)],
+        }
+        df_feat = pd.DataFrame(features)
+
+        # 1. Solar Predictions via LightGBM Quantile Models
+        m_s50 = self.models.get(f"{region_id}_solar_lgb_p50") or self.models.get(f"{region_id}_solar_p50")
+        m_s10 = self.models.get(f"{region_id}_solar_lgb_p10") or self.models.get(f"{region_id}_solar_p10")
+        m_s90 = self.models.get(f"{region_id}_solar_lgb_p90") or self.models.get(f"{region_id}_solar_p90")
+
+        if m_s50 is not None:
+            pred_solar_p50 = max(0.0, float(m_s50.predict(df_feat)[0]))
+            pred_solar_p10 = max(0.0, float(m_s10.predict(df_feat)[0]) if m_s10 is not None else pred_solar_p50 * 0.85)
+            pred_solar_p90 = max(0.0, float(m_s90.predict(df_feat)[0]) if m_s90 is not None else pred_solar_p50 * 1.15)
+        else:
+            pred_solar_p50 = solar_physics_kw
+            pred_solar_p10 = round(pred_solar_p50 * 0.85, 1)
+        # Enforce monotonic quantile ordering [P10 <= P50 <= P90]
+        pred_solar_p10, pred_solar_p50, pred_solar_p90 = sorted([pred_solar_p10, pred_solar_p50, pred_solar_p90])
+
+        # 2. Wind Predictions via LightGBM Quantile Models
+        m_w50 = self.models.get(f"{region_id}_wind_lgb_p50") or self.models.get(f"{region_id}_wind_p50")
+        m_w10 = self.models.get(f"{region_id}_wind_lgb_p10") or self.models.get(f"{region_id}_wind_p10")
+        m_w90 = self.models.get(f"{region_id}_wind_lgb_p90") or self.models.get(f"{region_id}_wind_p90")
+
+        if m_w50 is not None:
+            pred_wind_p50 = max(0.0, float(m_w50.predict(df_feat)[0]))
+            pred_wind_p10 = max(0.0, float(m_w10.predict(df_feat)[0]) if m_w10 is not None else pred_wind_p50 * 0.85)
+            pred_wind_p90 = max(0.0, float(m_w90.predict(df_feat)[0]) if m_w90 is not None else pred_wind_p50 * 1.15)
+        else:
+            pred_wind_p50 = wind_physics_kw
+            pred_wind_p10 = round(pred_wind_p50 * 0.85, 1)
+            pred_wind_p90 = round(pred_wind_p50 * 1.15, 1)
+
+        # Enforce monotonic quantile ordering [P10 <= P50 <= P90]
+        pred_wind_p10, pred_wind_p50, pred_wind_p90 = sorted([pred_wind_p10, pred_wind_p50, pred_wind_p90])
+
+        # 3. Campus Demand Synthesis (scaled to 250 kW campus peak)
+        occ = 0.90 if 9 <= effective_hour <= 18 else 0.45
+        cooling_add = max(0.0, (temp_c - 26.0) * 2.5)
+        pred_demand_p50 = round(max(70.0, min(240.0, 130.0 * occ + cooling_add + 10.0 * math.sin((effective_hour - 10) / 12 * math.pi))), 1)
+
+        # Round totals
+        solar_total = round(pred_solar_p50, 1)
+        wind_total = round(pred_wind_p50, 1)
+        demand_total = round(pred_demand_p50, 1)
+
+        # Asset Distribution (Prestige University Indore)
+        # 300 kW Solar PV: Academic Block A (180 kW = 60%), Engineering Block B (120 kW = 40%)
+        solar_01 = round(solar_total * (180.0 / 300.0), 1)
+        solar_02 = round(solar_total * (120.0 / 300.0), 1)
+        wind_01 = round(wind_total, 1)
+
+        # Campus Loads: Engineering 48%, Administration 30%, Hostels 22%
+        bldg_eng = round(demand_total * 0.48, 1)
+        bldg_admin = round(demand_total * 0.30, 1)
+        bldg_hostel = round(demand_total * 0.22, 1)
+
+        # Microgrid Energy Balance & Storage Dispatch
+        tot_gen = round(solar_total + wind_total, 1)
+        tot_load = round(bldg_eng + bldg_admin + bldg_hostel, 1)
+        net_balance = round(tot_gen - tot_load, 1)
+
+        if net_balance > 0:
+            # Excess generation charges battery (up to 100 kW total)
+            batt_power = -min(100.0, net_balance)
+            grid_exchange_signed = -round(net_balance + batt_power, 1)  # export
+        else:
+            # Deficit discharged from battery (up to 80 kW total)
+            deficit = abs(net_balance)
+            batt_power = min(80.0, deficit)
+            grid_exchange_signed = round(deficit - batt_power, 1)  # import
+
+        bess_unit_01 = round(batt_power / 2.0, 1)
+        bess_unit_02 = round(batt_power / 2.0, 1)
+        grid_power = round(abs(grid_exchange_signed), 1)
+
+        return {
+            "generated_at": target_dt.isoformat(),
+            "effective_hour": round(effective_hour, 2),
+            "is_daylight_simulated": effective_hour != ist_hour,
+            "region_id": region_id,
+            "weather_inputs": {
+                "ghi_wm2": ghi,
+                "dni_wm2": dni,
+                "dhi_wm2": dhi,
+                "wind_speed_mps": wind_speed,
+                "temp_c": temp_c,
+                "cloud_pct": cloud_pct,
+            },
+            "physics_baseline": {
+                "solar_physics_kw": solar_physics_kw,
+                "wind_physics_kw": wind_physics_kw,
+            },
+            "ml_predictions": {
+                "solar": {
+                    "p10_lower_kw": round(pred_solar_p10, 1),
+                    "p50_prediction_kw": solar_total,
+                    "p90_upper_kw": round(pred_solar_p90, 1),
+                },
+                "wind": {
+                    "p10_lower_kw": round(pred_wind_p10, 1),
+                    "p50_prediction_kw": wind_total,
+                    "p90_upper_kw": round(pred_wind_p90, 1),
+                },
+                "demand": {
+                    "p10_lower_kw": round(demand_total * 0.88, 1),
+                    "p50_prediction_kw": demand_total,
+                    "p90_upper_kw": round(demand_total * 1.12, 1),
+                },
+            },
+            "asset_setpoints": {
+                "solar-pv-01": solar_01,
+                "solar-pv-02": solar_02,
+                "wind-wt-01": wind_01,
+                "bess-unit-01": bess_unit_01,
+                "bess-unit-02": bess_unit_02,
+                "bldg-eng": bldg_eng,
+                "bldg-admin": bldg_admin,
+                "bldg-hostel": bldg_hostel,
+                "grid-mppkvvcl-01": grid_power,
+            },
+            "flow_summary": {
+                "total_solar_kw": solar_total,
+                "total_wind_kw": wind_total,
+                "total_generation_kw": tot_gen,
+                "total_demand_kw": tot_load,
+                "net_battery_kw": batt_power,
+                "grid_import_kw": max(0.0, grid_exchange_signed),
+                "grid_export_kw": abs(min(0.0, grid_exchange_signed)),
+                "net_balance_kw": net_balance,
+                "renewable_coverage_pct": round((tot_gen / tot_load) * 100.0, 1) if tot_load > 0 else 100.0,
+                "carbon_offset_kg_per_hr": round(tot_gen * 0.82, 2),
+                "model_type": "LightGBM Quantile Regressor (P50 Median)",
+            },
+        }
 
 
 # Singleton

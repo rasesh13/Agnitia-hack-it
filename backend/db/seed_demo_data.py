@@ -245,53 +245,24 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
 
     await session.flush()
 
-    # 7. Seed Initial Live States driven directly by ML Forecaster (Central India - Indore)
-    ml_forecast = ml_forecaster.forecast_48h(region_id="central_india_mp_indore", start_dt=now)
-    # Current hour prediction (index 0)
-    # If solar hour is evening, use daytime representative peak for live demo telemetry if needed
-    hour = now.hour
-    is_daylight = 6 <= hour <= 18
-    p50_solar = ml_forecast.series["solar"][0].p50_prediction
-    if not is_daylight and p50_solar == 0.0:
-        # For lively initial demonstration if started at night, show afternoon snapshot
-        demo_solar_total = 215.4
-    else:
-        demo_solar_total = p50_solar
-
-    demo_wind_total = max(18.0, ml_forecast.series["wind"][0].p50_prediction)
-    demo_demand_total = max(140.0, ml_forecast.series["demand"][0].p50_prediction)
-
-    # Distribute generation to arrays
-    solar_01_power = round(demo_solar_total * (180.0 / 300.0), 1)
-    solar_02_power = round(demo_solar_total * (120.0 / 300.0), 1)
-    wind_01_power = round(demo_wind_total, 1)
-
-    # Distribute load to buildings
-    eng_load = round(demo_demand_total * 0.48, 1)
-    admin_load = round(demo_demand_total * 0.30, 1)
-    hostel_load = round(demo_demand_total * 0.22, 1)
-
-    tot_gen = demo_solar_total + demo_wind_total
-    tot_load = eng_load + admin_load + hostel_load
-    net_surplus = tot_gen - tot_load
-
-    # Battery absorption/discharge
-    if net_surplus > 0:
-        # Excess renewable charges battery
-        batt_power = -min(100.0, net_surplus)  # negative = charging
-        grid_exchange = round(net_surplus + batt_power, 1)  # positive = export
-        grid_exchange_signed = -grid_exchange  # negative = export in net_grid_exchange
-    else:
-        deficit = abs(net_surplus)
-        batt_power = min(80.0, deficit)  # positive = discharging
-        grid_exchange_signed = round(deficit - batt_power, 1)  # positive = import
+    # 7. Seed Initial Live States: Real-Life Weather API + Physics + LightGBM Model Predictions
+    initial_pred = ml_forecaster.predict_realtime_point(region_id="central_india_mp_indore")
+    setpoints = initial_pred.get("asset_setpoints", {})
+    solar_01_power = setpoints.get("solar-pv-01", 105.7)
+    solar_02_power = setpoints.get("solar-pv-02", 70.4)
+    wind_01_power = setpoints.get("wind-wt-01", 12.2)
+    batt_power = setpoints.get("bess-unit-01", -21.0) * 2.0
+    eng_load = setpoints.get("bldg-eng", 70.2)
+    admin_load = setpoints.get("bldg-admin", 43.9)
+    hostel_load = setpoints.get("bldg-hostel", 32.2)
+    grid_exchange_signed = setpoints.get("grid-mppkvvcl-01", 0.0)
 
     states_def = [
         {
             "asset_id": "solar-pv-01",
             "operational_status": "online",
             "active_power_kw": solar_01_power,
-            "energy_kwh": 640.5,
+            "energy_kwh": 0.0,
             "temperature_celsius": 38.2,
             "voltage_v": 415.2,
             "frequency_hz": 50.01,
@@ -301,7 +272,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "solar-pv-02",
             "operational_status": "online",
             "active_power_kw": solar_02_power,
-            "energy_kwh": 420.0,
+            "energy_kwh": 0.0,
             "temperature_celsius": 37.8,
             "voltage_v": 414.8,
             "frequency_hz": 50.01,
@@ -311,7 +282,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "wind-wt-01",
             "operational_status": "online",
             "active_power_kw": wind_01_power,
-            "energy_kwh": 310.2,
+            "energy_kwh": 0.0,
             "wind_speed_ms": 6.8,
             "temperature_celsius": 29.5,
             "voltage_v": 415.0,
@@ -322,7 +293,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "bess-unit-01",
             "operational_status": "online",
             "active_power_kw": round(batt_power / 2.0, 1),
-            "energy_kwh": 185.0,
+            "energy_kwh": 0.0,
             "soc_percent": 74.5,
             "health_percent": 96.8,
             "temperature_celsius": 26.4,
@@ -334,7 +305,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "bess-unit-02",
             "operational_status": "online",
             "active_power_kw": round(batt_power / 2.0, 1),
-            "energy_kwh": 182.5,
+            "energy_kwh": 0.0,
             "soc_percent": 73.8,
             "health_percent": 97.2,
             "temperature_celsius": 26.2,
@@ -346,7 +317,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "bldg-eng",
             "operational_status": "online",
             "active_power_kw": eng_load,
-            "energy_kwh": 512.4,
+            "energy_kwh": 0.0,
             "voltage_v": 414.9,
             "frequency_hz": 50.00,
             "telemetry_quality": TelemetryQuality.GOOD,
@@ -355,7 +326,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "bldg-admin",
             "operational_status": "online",
             "active_power_kw": admin_load,
-            "energy_kwh": 348.1,
+            "energy_kwh": 0.0,
             "voltage_v": 415.1,
             "frequency_hz": 50.01,
             "telemetry_quality": TelemetryQuality.GOOD,
@@ -364,7 +335,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "bldg-hostel",
             "operational_status": "online",
             "active_power_kw": hostel_load,
-            "energy_kwh": 264.8,
+            "energy_kwh": 0.0,
             "voltage_v": 414.6,
             "frequency_hz": 50.00,
             "telemetry_quality": TelemetryQuality.GOOD,
@@ -373,7 +344,7 @@ async def seed_prestige_microgrid(session: AsyncSession) -> None:
             "asset_id": "grid-mppkvvcl-01",
             "operational_status": "online",
             "active_power_kw": abs(grid_exchange_signed),
-            "energy_kwh": 1420.0,
+            "energy_kwh": 0.0,
             "voltage_v": 11020.0,
             "frequency_hz": 50.01,
             "telemetry_quality": TelemetryQuality.GOOD,
