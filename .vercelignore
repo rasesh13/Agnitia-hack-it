@@ -1,0 +1,13 @@
+# Only the web console (frontend/) and the 3D simulator it bundles (simulator/) are built on Vercel.
+backend
+mobile
+training
+tests
+docs
+nginx
+.venv
+**/node_modules
+**/dist
+frontend/public/simulator
+*.db
+.env
