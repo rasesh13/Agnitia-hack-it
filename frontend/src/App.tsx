@@ -35,6 +35,7 @@ import {
   ChevronDown,
   Clock,
 } from 'lucide-react';
+import { SuryaMark } from '@/components/SuryaMark';
 
 export type NavTab =
   | 'overview'
@@ -160,11 +161,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onReturnToLanding }
         <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo & Platform Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5 shadow-lg shadow-emerald-500/20">
-              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                <Sun className="h-5 w-5 text-amber-400" />
-              </div>
-            </div>
+            <SuryaMark size={38} className="drop-shadow-[0_0_14px_rgba(245,158,11,0.35)]" />
             <div className="leading-tight">
               <div className="font-display text-base font-bold tracking-tight text-white">SURYA</div>
               <div className="hidden text-[11px] font-medium text-emerald-400/90 sm:block">Operations Platform</div>
@@ -373,11 +370,7 @@ const RootApp: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 text-slate-200">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-500 p-0.5 animate-pulse shadow-lg shadow-emerald-500/20">
-          <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950">
-            <Sun className="h-6 w-6 text-amber-400" />
-          </div>
-        </div>
+        <SuryaMark size={56} className="animate-pulse drop-shadow-[0_0_24px_rgba(245,158,11,0.45)]" />
         <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-slate-400">
           Initializing SURYA System
         </p>
