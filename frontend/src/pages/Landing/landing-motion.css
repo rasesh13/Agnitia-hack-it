@@ -1,0 +1,85 @@
+/* Scoped Landing Motion Styles (Retrofit Lock) */
+
+/* Zero Simulation panel border light sweep */
+.landing-root [data-anim="zero-sim-panel"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-root [data-anim="zero-sim-panel"]::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(245, 158, 11, 0.2),
+    transparent 30%
+  );
+  animation: borderSweep 8s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-root [data-anim="zero-sim-panel"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes borderSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Feature cards cursor-follow glow */
+.landing-root [data-anim="feature-card"] {
+  position: relative;
+}
+
+.landing-root [data-anim="feature-card"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    600px circle at var(--mx, -1000px) var(--my, -1000px),
+    rgba(245, 158, 11, 0.08),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.landing-root [data-anim="feature-card"]:hover::after {
+  opacity: 1;
+}
+
+/* Words in split-heading */
+.landing-root .word-wrap {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  margin-right: 0.28em;
+}
+
+.landing-root .word-inner {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* Card image scrub wrapper */
+.landing-root [data-anim="card-img-wrap"] {
+  overflow: hidden;
+}
+
+.landing-root [data-anim="card-img"] {
+  will-change: transform;
+}

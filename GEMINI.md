@@ -17,3 +17,22 @@ The current hero background transition and scroll mechanism are finalized as **f
 3. **Visual Cleanliness**:
    - No vertical laser divider lines or floating progress percentage pills in the Hero transition. The wipe must remain pure and seamless across the images.
    - No references to "Compliance", "RERC", or "Amendment Act" across the site.
+
+
+## Landing Page Rules & Cinematic Motion System Lock
+- **Theme Lock (Non-Negotiable)**:
+  - Colors, border-radii, shadows, and glassmorphism styles MUST come strictly from existing theme tokens and Tailwind classes (`slate-*`, `brand-*`, `amber-*`, `emerald-*`, `.glass-nav-hero`, `.glass-nav-panel`). No arbitrary new hex codes or foreign design palettes.
+  - Global CSS rules, `body`, and `:root` fonts remain untouched. Outfit (`fontFamily.display`) is used exclusively for display/headings, imported locally in the landing entry.
+  - All landing-specific styles remain scoped under `.landing-root` in `frontend/src/pages/Landing/`.
+- **Motion & Scroll Stack**:
+  - Lenis smooth scrolling is active exclusively while the Landing view is mounted, destroyed immediately upon unmount so the operations dashboard and auth screens retain unhindered native scrolling.
+  - Lenis and GSAP ScrollTrigger must remain strictly synchronized via `gsap.ticker`.
+  - Transform-only parallax scrubbing on hero layers; below 768px and under `prefers-reduced-motion`, parallax and scrub are disabled in favor of static opacity reveals.
+- **Data & Copy Integrity**:
+  - Strictly real platform facts and technical specifications sourced directly from `README.md`. No fictitious quotes, testimonials, or simulated data claims.
+
+## Landing Motion Rules (Retrofit Lock)
+- **Library Separation (Strict)**: Framer-motion exclusively retains the scroll-locked Hero campus wipe clipPath and badge opacity crossfades. GSAP + ScrollTrigger exclusively governs parallax scrubbing, section reveals, image scrub, SVG line draw, metric count-ups, and hover glows. Never animate the same property on the same element with both libraries.
+- **Marker Targeting**: Motion targets only explicit `[data-anim]` attributes; styling, layout, copy, and typography remain untouched.
+- **Lifecycle Cleanliness**: Lenis instance and GSAP ScrollTrigger tickers must be cleanly instantiated on landing mount and completely destroyed upon unmount to preserve native dashboard scrolling.
+- **Accessibility & Responsive**: Parallax, scrub, and Lenis are disabled below 768px and under `prefers-reduced-motion` in favor of accessible static reveals.

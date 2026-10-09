@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import '@fontsource-variable/outfit';
 import './landing.css';
+import './landing-motion.css';
+import { useLandingMotion } from './useLandingMotion';
 
 import { Hero } from './components/Hero';
 import { AssetShowcaseSection } from './components/AssetShowcaseSection';
@@ -23,6 +25,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onLogin,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Retrofit scroll motion hook scoping all [data-anim] markers and Lenis lifecycle
+  useLandingMotion(containerRef);
 
 
   return (
