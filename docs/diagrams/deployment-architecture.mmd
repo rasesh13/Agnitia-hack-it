@@ -1,0 +1,23 @@
+%% Deployment topologies found in the repository (render.yaml, vercel.json, docker-compose.yml, nginx/nginx.conf)
+flowchart TB
+    subgraph Hosted["Hosted (render.yaml + vercel.json)"]
+        V["Vercel static site<br/>frontend/dist + /simulator/<br/>SPA rewrite to /index.html"]
+        RW["Render web service surya-backend<br/>python 3.12.8, 1 uvicorn worker<br/>alembic upgrade head on start"]
+        RDB[("Render Postgres surya-db<br/>free plan, singapore")]
+        V -. "browser calls VITE_API_URL" .-> RW
+        RW --> RDB
+    end
+
+    subgraph Compose["Self-hosted (docker-compose.yml)"]
+        NG["frontend container<br/>nginx:alpine :80<br/>static SPA + /simulator/"]
+        BE["backend container<br/>python:3.11-slim :8000<br/>entrypoint: alembic + uvicorn x4 workers"]
+        PG[("postgres:16-alpine<br/>volume surya_pgdata")]
+        NG -- "/api/, /ws, /health" --> BE
+        BE --> PG
+    end
+
+    subgraph LAN["Local / LAN"]
+        PHONE["SURYA Ops APK"]
+        DEV["uvicorn on 0.0.0.0:<port>"]
+        PHONE -- "HTTP over Wi-Fi" --> DEV
+    end
