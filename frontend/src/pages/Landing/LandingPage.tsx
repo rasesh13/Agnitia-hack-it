@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import '@fontsource-variable/outfit';
 import './landing.css';
 import './landing-motion.css';
+import './warm-heritage-theme.css';
 import { useLandingMotion } from './useLandingMotion';
 
 import { Hero } from './components/Hero';

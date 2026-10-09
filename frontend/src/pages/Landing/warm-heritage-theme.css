@@ -1,0 +1,201 @@
+/* ==========================================================================
+   SURYA Warm Heritage Design System & Reusable Card Theme Tokens
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+:root,
+.landing-root {
+  --page-bg: #0B1220;
+  --card-bg: #F5EBD7;
+  --card-glow: #E6D3A8;
+  --inner-card-bg: #FDFBF7;
+  --accent: #7A5A3A;
+  --accent-hover: #654A2E;
+  --border-tan: #B89B77;
+  --text-primary: #000000;
+  --text-secondary: #4B5563;
+  --badge-bg: #E8DCC4;
+}
+
+/* Page backdrop */
+.landing-root {
+  background-color: var(--page-bg, #0B1220);
+}
+
+/* ==========================================================================
+   Component Utility Classes
+   ========================================================================== */
+
+/* Main Card: Cream background with two soft radial gradients using --card-glow
+   (top-right and bottom-left), 1px tan border, large rounded corners (~24px),
+   soft warm shadow, with smooth 200ms lift on hover. */
+.heritage-main-card {
+  position: relative;
+  background-color: var(--card-bg, #F5EBD7);
+  background-image:
+    radial-gradient(circle at 95% 8%, var(--card-glow, #E6D3A8) 0%, transparent 45%),
+    radial-gradient(circle at 5% 92%, var(--card-glow, #E6D3A8) 0%, transparent 45%);
+  border: 1px solid var(--border-tan, #B89B77);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(122, 90, 58, 0.08);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  overflow: hidden;
+}
+
+.heritage-main-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(122, 90, 58, 0.16);
+  border-color: var(--accent, #7A5A3A);
+}
+
+/* Inner cards: Ivory background, rounded-2xl (~20px), subtle shadow
+   (0 8px 24px rgba(122,90,58,0.12)), generous padding */
+.heritage-inner-card {
+  background-color: var(--inner-card-bg, #FDFBF7);
+  border: 1px solid rgba(184, 155, 119, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(122, 90, 58, 0.12);
+  padding: 1.25rem;
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.heritage-inner-card:hover {
+  border-color: rgba(122, 90, 58, 0.5);
+}
+
+/* Headings: Bold, tight line-height, --text-primary, geometric sans-serif (Poppins) */
+.heritage-heading {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary, #000000);
+  letter-spacing: -0.02em;
+}
+
+/* Body text: Regular weight, --text-secondary, relaxed line-height */
+.heritage-body {
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-secondary, #4B5563);
+}
+
+/* Eyebrow labels / badges: Small, uppercase, letter-spaced, --accent text on --badge-bg */
+.heritage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background-color: var(--badge-bg, #E8DCC4);
+  color: var(--accent, #7A5A3A);
+  border: 1px solid rgba(184, 155, 119, 0.5);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Pills / chips: White or ivory background, small bold text, fully rounded, thin border */
+.heritage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background-color: var(--inner-card-bg, #FDFBF7);
+  color: var(--text-primary, #111827);
+  border: 1px solid rgba(184, 155, 119, 0.45);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+}
+
+/* Primary button: Solid --accent background, white text, rounded-xl, bold,
+   soft shadow, darker --accent-hover on hover */
+.heritage-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--accent, #7A5A3A);
+  color: #ffffff !important;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  padding: 0.625rem 1.25rem;
+  box-shadow: 0 4px 14px rgba(122, 90, 58, 0.25);
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.heritage-btn-primary:hover {
+  background-color: var(--accent-hover, #654A2E);
+  box-shadow: 0 6px 20px rgba(122, 90, 58, 0.35);
+  transform: translateY(-1px);
+}
+
+.heritage-btn-primary:focus-visible {
+  outline: 2px solid var(--accent, #7A5A3A);
+  outline-offset: 2px;
+}
+
+/* Secondary button: Transparent background, 1.5px --border-tan border,
+   --text-primary text, light cream fill on hover */
+.heritage-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  border: 1.5px solid var(--border-tan, #B89B77);
+  color: var(--text-primary, #111827) !important;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.heritage-btn-secondary:hover {
+  background-color: rgba(245, 235, 215, 0.75);
+  border-color: var(--accent, #7A5A3A);
+  transform: translateY(-1px);
+}
+
+.heritage-btn-secondary:focus-visible {
+  outline: 2px solid var(--accent, #7A5A3A);
+  outline-offset: 2px;
+}
+
+/* Stat numbers (e.g. "24/7"): Large, bold, --accent color, with a small
+   --text-secondary caption underneath */
+.heritage-stat-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent, #7A5A3A);
+  letter-spacing: -0.03em;
+}
+
+.heritage-stat-caption {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #4B5563);
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
+
+/* Subtle tan divider line inside heritage cards */
+.heritage-divider {
+  border-color: rgba(184, 155, 119, 0.35);
+}
+
+/* Image fallback placeholder with beige background */
+.heritage-img-fallback {
+  background-color: var(--card-bg, #F5EBD7);
+}
+
+/* Accessibility focus ring */
+.heritage-focus-ring:focus-visible {
+  outline: 2px solid var(--accent, #7A5A3A);
+  outline-offset: 2px;
+}
