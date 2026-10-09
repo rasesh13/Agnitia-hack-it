@@ -1,0 +1,27 @@
+%% Lifecycle of an authenticated REST request (backend/api/middleware.py, deps.py, routes_*.py)
+sequenceDiagram
+    autonumber
+    participant C as Client (web / mobile)
+    participant CORS as CORSMiddleware
+    participant RID as RequestCorrelationMiddleware
+    participant R as Router handler
+    participant D as Dependencies (get_db, get_current_user / require_*)
+    participant DB as Database
+    participant EH as Exception handlers
+
+    C->>CORS: GET /api/v1/decisions/latest (Authorization: Bearer JWT)
+    CORS->>RID: pass (adds CORS headers on the way out)
+    RID->>RID: request_id = X-Request-ID or uuid4
+    RID->>R: route match
+    R->>D: resolve dependencies
+    D->>DB: open AsyncSession
+    D->>D: decode JWT (HS256), check exp
+    D->>DB: load user, check is_active and token_version
+    D->>D: role check (403 if not allowed)
+    R->>DB: query via repository / select()
+    DB-->>R: rows
+    R-->>RID: Pydantic response model -> JSON
+    RID-->>C: 200 + X-Request-ID
+    Note over R,EH: Any HTTPException / validation error / unhandled error<br/>is converted to {"error": {code, message, request_id, details}}
+    R--xEH: raise HTTPException
+    EH-->>C: 4xx/5xx error envelope
