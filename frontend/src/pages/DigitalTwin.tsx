@@ -120,13 +120,6 @@ export const DigitalTwin: React.FC = () => {
         </div>
       </div>
 
-      {/* ML Telemetry Digital Twin State Estimation Controller */}
-      <MLTelemetryController
-        siteId={1}
-        category="twin"
-        onRefreshState={refresh}
-      />
-
       {/* 3D Campus Simulator */}
       <div
         ref={simulatorRef}
@@ -186,6 +179,13 @@ export const DigitalTwin: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* ML Telemetry Digital Twin State Estimation Controller */}
+      <MLTelemetryController
+        siteId={1}
+        category="twin"
+        onRefreshState={refresh}
+      />
 
       {/* Buildings Criticality Tiers Section */}
       {buildingAssets.length > 0 && (

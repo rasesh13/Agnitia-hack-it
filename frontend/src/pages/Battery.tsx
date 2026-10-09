@@ -54,15 +54,6 @@ export const Battery: React.FC = () => {
         </div>
       </div>
 
-      {/* ML Model Live Telemetry & Zero Baseline Controller */}
-      <MLTelemetryController
-        siteId={1}
-        category="battery"
-        onRefreshState={refresh}
-        currentRenewableKw={aggregates.total_renewable_generation_kw}
-        currentDemandKw={aggregates.total_campus_demand_kw}
-      />
-
       {/* Battery Aggregate KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -104,6 +95,15 @@ export const Battery: React.FC = () => {
           iconBg="bg-emerald-500/10 border-emerald-500/20"
         />
       </div>
+
+      {/* ML Model Live Telemetry & Zero Baseline Controller */}
+      <MLTelemetryController
+        siteId={1}
+        category="battery"
+        onRefreshState={refresh}
+        currentRenewableKw={aggregates.total_renewable_generation_kw}
+        currentDemandKw={aggregates.total_campus_demand_kw}
+      />
 
       {/* Individual Battery Units */}
       <div>

@@ -60,15 +60,6 @@ export const Grid: React.FC = () => {
         </div>
       </div>
 
-      {/* ML Model Live Telemetry & Zero Baseline Controller */}
-      <MLTelemetryController
-        siteId={1}
-        category="grid"
-        onRefreshState={refresh}
-        currentRenewableKw={aggregates.total_renewable_generation_kw}
-        currentDemandKw={aggregates.total_campus_demand_kw}
-      />
-
       {/* Grid KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -121,6 +112,15 @@ export const Grid: React.FC = () => {
           iconBg="bg-purple-500/10 border-purple-500/20"
         />
       </div>
+
+      {/* ML Model Live Telemetry & Zero Baseline Controller */}
+      <MLTelemetryController
+        siteId={1}
+        category="grid"
+        onRefreshState={refresh}
+        currentRenewableKw={aggregates.total_renewable_generation_kw}
+        currentDemandKw={aggregates.total_campus_demand_kw}
+      />
 
       {/* Main Grid Info Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
