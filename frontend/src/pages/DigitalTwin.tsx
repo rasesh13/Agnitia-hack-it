@@ -13,13 +13,21 @@ import {
   Building2,
   UtilityPole,
   Search,
+  Box,
+  Maximize2,
+  Minimize2,
+  ExternalLink,
 } from 'lucide-react';
+
+// 3D campus simulator, served as a static build from public/simulator.
+const SIMULATOR_URL = '/simulator/index.html?embed=1#prestige-university';
 
 export const DigitalTwin: React.FC = () => {
   const { site, assets, isStale, stalenessSeconds, refresh, isLoading } = useLiveTwin(1);
   const [selectedAsset, setSelectedAsset] = useState<AssetRead | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [simulatorFullscreen, setSimulatorFullscreen] = useState(false);
 
   const buildingAssets = assets.filter((a) => a.asset_type === 'building');
 
@@ -88,6 +96,53 @@ export const DigitalTwin: React.FC = () => {
             <span>Refresh State</span>
           </button>
         </div>
+      </div>
+
+      {/* 3D Campus Simulator */}
+      <div
+        className={
+          simulatorFullscreen
+            ? 'fixed inset-0 z-[60] flex flex-col bg-slate-950'
+            : 'overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 shadow-xl'
+        }
+      >
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-700 bg-slate-800">
+              <Box className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-white">3D Campus Simulator</h2>
+              <p className="text-[11px] text-slate-400">
+                Prestige University, Indore • drag to orbit, scroll to zoom, use the top bar to jump to buildings
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={SIMULATOR_URL.replace('embed=1', 'embed=0')}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New Tab</span>
+            </a>
+            <button
+              onClick={() => setSimulatorFullscreen((value) => !value)}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-700"
+            >
+              {simulatorFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{simulatorFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+            </button>
+          </div>
+        </div>
+        <iframe
+          title="Prestige University 3D campus simulator"
+          src={SIMULATOR_URL}
+          className={simulatorFullscreen ? 'w-full flex-1 border-0' : 'h-[75vh] min-h-[560px] w-full border-0'}
+          allow="fullscreen"
+        />
       </div>
 
       {/* Buildings Criticality Tiers Section */}
