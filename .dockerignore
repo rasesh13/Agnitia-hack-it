@@ -1,0 +1,14 @@
+# Host-installed dependencies contain platform-specific binaries (e.g. Windows
+# esbuild/rollup) that would overwrite the Linux packages installed by `npm ci`.
+**/node_modules
+
+# Local build output and generated assets; images build these themselves.
+frontend/dist
+simulator/dist
+frontend/public/simulator
+
+# Local Python environments, databases and secrets
+.venv
+**/__pycache__
+*.db
+.env
