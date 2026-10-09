@@ -4,7 +4,6 @@ import {
   Cpu,
   Zap,
   FileCheck2,
-  ArrowRight,
   Sparkles,
   Activity,
   CheckCircle2,
@@ -92,15 +91,15 @@ export const PipelineSection: React.FC = () => {
   ];
 
   return (
-    <section id="pipeline-section" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-slate-950 overflow-hidden">
+    <section id="pipeline-section" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-heritage-page overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[900px] rounded-full bg-amber-500/10 blur-[180px] pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="gsap-reveal inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-300 mb-4 backdrop-blur-md shadow-lg shadow-amber-500/10">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <div className="gsap-reveal heritage-badge mb-4 backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 text-heritage-accent" />
             <span>PRODUCTION WORKFLOW ARCHITECTURE</span>
           </div>
 
@@ -125,14 +124,12 @@ export const PipelineSection: React.FC = () => {
                 key={step.num}
                 data-anim="card"
                 onMouseEnter={() => setActiveStep(idx)}
-                className={`gsap-reveal group relative flex flex-col justify-between rounded-3xl border transition-all duration-500 overflow-hidden backdrop-blur-xl ${
-                  isHovered
-                    ? 'border-amber-400/60 bg-slate-900/90 shadow-2xl shadow-amber-500/10 -translate-y-1.5'
-                    : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+                className={`gsap-reveal group relative flex flex-col justify-between heritage-main-card transition-all duration-300 ${
+                  isHovered ? '-translate-y-1.5' : ''
                 }`}
               >
                 {/* Visual Top Preview: High-Resolution Photographic Backdrop + HUD Telemetry Overlay */}
-                <div data-anim="card-img-wrap" className="relative h-48 w-full overflow-hidden bg-slate-950">
+                <div data-anim="card-img-wrap" className="relative h-48 w-full overflow-hidden heritage-img-fallback">
                   <img
                     data-anim="card-img"
                     src={step.image}
@@ -142,35 +139,35 @@ export const PipelineSection: React.FC = () => {
                   />
 
                   {/* Gradient Scrim */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-[var(--card-bg)]/40 to-transparent" />
 
                   {/* Top Header inside image */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                    <span className="font-display font-black text-2xl text-white/90 drop-shadow-md">
+                    <span className="font-display font-black text-2xl text-white drop-shadow-md">
                       {step.num}
                     </span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-slate-950/80 text-amber-400 backdrop-blur-md shadow-lg">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-tan)]/60 bg-[var(--inner-card-bg)] text-heritage-accent backdrop-blur-md shadow-lg">
                       <Icon className="h-4 w-4" />
                     </div>
                   </div>
 
                   {/* Live HUD Mini Overlay inside Image */}
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 rounded-xl border border-white/10 bg-slate-950/85 p-2.5 backdrop-blur-md">
-                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-amber-300">
+                  <div className="heritage-inner-card absolute bottom-2.5 left-2.5 right-2.5 z-10 !p-2.5">
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-heritage-accent">
                       <span className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         {step.hud.tag}
                       </span>
                     </div>
 
-                    <div className="mt-1.5 grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-300">
+                    <div className="mt-1.5 grid grid-cols-2 gap-2 text-[10px] font-mono text-heritage-text-secondary">
                       <div>
-                        <span className="text-slate-400 block text-[9px]">{step.hud.metric1.label}</span>
-                        <span className="font-bold text-white">{step.hud.metric1.val}</span>
+                        <span className="text-heritage-text-secondary block text-[9px]">{step.hud.metric1.label}</span>
+                        <span className="font-bold text-heritage-text-primary">{step.hud.metric1.val}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[9px]">{step.hud.metric2.label}</span>
-                        <span className="font-bold text-amber-300">{step.hud.metric2.val}</span>
+                        <span className="text-heritage-text-secondary block text-[9px]">{step.hud.metric2.label}</span>
+                        <span className="font-bold text-heritage-accent">{step.hud.metric2.val}</span>
                       </div>
                     </div>
                   </div>
@@ -180,77 +177,70 @@ export const PipelineSection: React.FC = () => {
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div>
                     {/* Badge */}
-                    <div className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border mb-2.5 backdrop-blur-md ${step.badgeColor}`}>
+                    <div className="heritage-badge mb-2.5">
                       {step.badge}
                     </div>
 
                     {/* Step Title */}
-                    <h3 className="font-display text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <h3 className="heritage-heading text-xl font-bold tracking-tight flex items-center gap-2">
                       <span>{step.title}</span>
                     </h3>
 
                     {/* Technical Headline */}
-                    <div className="text-xs font-semibold text-amber-300/90 font-mono mt-0.5">
+                    <div className="text-xs font-semibold text-heritage-accent font-mono mt-0.5">
                       {step.headline}
                     </div>
 
                     {/* Description */}
-                    <p className="mt-2.5 text-xs text-slate-400 leading-relaxed font-sans">
+                    <p className="heritage-body mt-2.5 text-xs leading-relaxed">
                       {step.description}
                     </p>
                   </div>
 
                   {/* Micro Specs List */}
-                  <div className="pt-3 border-t border-slate-800/80 space-y-1.5">
+                  <div className="pt-3 border-t heritage-divider space-y-1.5">
                     {step.specs.map((item, sIdx) => (
-                      <div key={sIdx} className="flex items-center gap-1.5 text-[11px] text-slate-300 font-sans">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <div key={sIdx} className="flex items-center gap-1.5 text-[11px] text-heritage-text-secondary font-sans">
+                        <CheckCircle2 className="h-3 w-3 text-heritage-accent shrink-0" />
                         <span>{item}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Status Indicator */}
-                  <div className="pt-2 text-[10px] font-mono text-emerald-400/90 flex items-center gap-1.5">
+                  <div className="pt-2 text-[10px] font-mono text-heritage-accent flex items-center gap-1.5">
                     <Activity className="h-3 w-3" />
                     <span>{step.hud.status}</span>
                   </div>
                 </div>
-
-                {/* Connecting arrow for desktop view */}
-                {idx < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 h-7 w-7 items-center justify-center rounded-full border border-slate-800 bg-slate-950 text-slate-400 shadow-md">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
 
         {/* Global Pipeline Telemetry Bar */}
-        <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
+        <div className="heritage-inner-card mt-12 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <div className="h-9 w-9 rounded-xl bg-[var(--badge-bg)] border border-[var(--border-tan)]/40 flex items-center justify-center text-heritage-accent">
               <Shield className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-xs font-bold text-white font-display">
+              <div className="text-xs font-bold text-heritage-text-primary font-display">
                 Continuous Hardware-in-the-Loop Validation
               </div>
-              <div className="text-[11px] text-slate-400 font-sans">
+              <div className="text-[11px] text-heritage-text-secondary font-sans">
                 Zero simulation policy · All telemetry validated against physical Modbus registers
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-xs font-mono text-slate-300">
+          <div className="flex items-center gap-6 text-xs font-mono text-heritage-text-secondary">
             <span className="flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5 text-emerald-400" />
+              <TrendingDown className="h-3.5 w-3.5 text-heritage-accent" />
               <span>Cost Arbitrage Active</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <FileSpreadsheet className="h-3.5 w-3.5 text-amber-400" />
+              <FileSpreadsheet className="h-3.5 w-3.5 text-heritage-accent" />
               <span>RFC 4180 Format</span>
             </span>
           </div>
