@@ -342,6 +342,10 @@ class AgnitiaMLForecaster:
         horizon_hours = 48
         timestamps = [start_dt + timedelta(hours=i) for i in range(horizon_hours)]
         ts_strings = [t.isoformat() for t in timestamps]
+        # Sample profiles are indexed by local (IST) hour of day, so align them to the clock
+        # rather than to "hours from now"; otherwise the solar peak drifts into the night.
+        ist_hours = [(t + timedelta(hours=5, minutes=30)).hour for t in timestamps]
+        ist_start_hour = ist_hours[0]
 
         series_map: Dict[str, List[HorizonPoint]] = {"solar": [], "wind": [], "demand": []}
 
@@ -356,7 +360,7 @@ class AgnitiaMLForecaster:
             wind_test = reg_data["targets"]["wind"].get("sample_test", {})
 
             for i in range(horizon_hours):
-                idx = i % len(solar_test.get("p50", [0.0])) if solar_test else 0
+                idx = (i + ist_start_hour) % len(solar_test.get("p50", [0.0])) if solar_test else 0
                 # Solar
                 series_map["solar"].append(
                     HorizonPoint(
@@ -385,7 +389,7 @@ class AgnitiaMLForecaster:
                 )
                 # Synthetic campus demand profile matching generation capacity
                 cap_total = reg_data["targets"]["solar"]["capacity_kw"] + reg_data["targets"]["wind"]["capacity_kw"]
-                hour = timestamps[i].hour
+                hour = ist_hours[i]
                 occ = 0.9 if 9 <= hour <= 19 else 0.4
                 dem = round(cap_total * 0.65 * occ * (1.0 + 0.05 * np.sin(hour)), 1)
                 series_map["demand"].append(
@@ -414,7 +418,7 @@ class AgnitiaMLForecaster:
             demand_sample = sample_results.get("demand_mw", {}).get("test_sample", {})
 
             for i in range(horizon_hours):
-                idx = i % 72
+                idx = (i + ist_start_hour) % 72
                 series_map["solar"].append(
                     HorizonPoint(
                         timestamp=ts_strings[i],
