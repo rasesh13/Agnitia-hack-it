@@ -47,6 +47,13 @@ class Settings(BaseSettings):
         "sqlite+aiosqlite:///./surya_dev.db",
         description="Async database connection string",
     )
+    SEED_DEMO_DATA: bool = Field(
+        False,
+        description=(
+            "Idempotently seed the Prestige University demo microgrid and demo accounts "
+            "at startup outside development (for public demo deployments)"
+        ),
+    )
 
     # Telemetry Configuration
     TELEMETRY_POLL_INTERVAL_SECONDS: int = Field(

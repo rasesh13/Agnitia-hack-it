@@ -30,9 +30,11 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     setup_logging()
 
-    # Initialize DB & seed Prestige University microgrid in development
+    # Development creates tables directly; other environments are migrated by Alembic.
     if settings.ENVIRONMENT in {"development", "test"}:
         await init_db()
+    # Seed the Prestige University microgrid in development, or on demo deployments.
+    if settings.ENVIRONMENT in {"development", "test"} or settings.SEED_DEMO_DATA:
         session_factory = get_session_maker()
         async with session_factory() as session:
             await seed_prestige_microgrid(session)
