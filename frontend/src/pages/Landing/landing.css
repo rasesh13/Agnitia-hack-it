@@ -1,0 +1,129 @@
+/* Scoped Landing Page Styles for SURYA */
+
+.landing-root {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+  background-color: #020617; /* slate-950 */
+  color: #f8fafc; /* slate-50 */
+  overflow-x: hidden;
+}
+
+.landing-root h1,
+.landing-root h2,
+.landing-root h3,
+.landing-root .font-display {
+  font-family: 'Outfit Variable', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Layer Parallax Positioning */
+.landing-root .hero-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+
+/* Headline with blurred duplicate behind */
+.landing-root .hero-headline {
+  position: relative;
+  display: inline-block;
+  font-size: clamp(3rem, 9vw, 8.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.landing-root .hero-headline::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  filter: blur(5px);
+  color: #020617; /* very dark / slate-950 */
+  opacity: 0.95;
+  pointer-events: none;
+  user-select: none;
+  transform: translateY(2px);
+}
+
+/* Section Seamless Transitions */
+.landing-root .section-fade-in {
+  position: relative;
+}
+
+.landing-root .section-fade-in::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, #020617 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.landing-root .section-fade-in::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(0deg, #020617 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Animated Scroll Wheel Indicator */
+.landing-root .scroll-indicator-wheel {
+  width: 24px;
+  height: 42px;
+  border-radius: 9999px;
+  border: 2px solid rgba(217, 119, 6, 0.4); /* amber-600/40 */
+  background: rgba(20, 15, 11, 0.5); /* #140f0b */
+  position: relative;
+  display: flex;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(217, 119, 6, 0.15);
+}
+
+.landing-root .scroll-indicator-wheel .wheel-dot {
+  width: 4px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #fbbf24; /* amber-400 */
+  animation: scrollWheelLoop 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  box-shadow: 0 0 8px #fbbf24;
+}
+
+@keyframes scrollWheelLoop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  30% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.8;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Rotor Animation when idle or fallback */
+.landing-root .rotor-graphic {
+  transform-origin: center center;
+  will-change: transform;
+}

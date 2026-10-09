@@ -256,6 +256,7 @@ const RootApp: React.FC = () => {
         }
       }}
       onLogin={() => setViewState('login')}
+      onSignup={() => setViewState('signup')}
     />
   );
 };
