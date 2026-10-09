@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Radio,
@@ -20,7 +20,6 @@ interface MLTelemetryControllerProps {
 
 export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
   siteId = 1,
-  onRefreshState,
   currentRenewableKw = 0,
   currentDemandKw = 0,
   className = '',
@@ -43,9 +42,7 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
     total_kw: number;
   } | null>(null);
 
-  const fallbackIntervalRef = useRef<number | null>(null);
-
-  // Sync WebSocket fluctuation and weather if received
+  // Sync WebSocket fluctuation and weather smoothly at backend's 3.0s cadence
   useEffect(() => {
     if (wsFluctuation) {
       setLocalFluctuation(wsFluctuation);
@@ -58,13 +55,13 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
     }
   }, [wsFluctuation]);
 
-  // Ensure background streaming is active & populate initial weather + fluctuation on mount
+  // Ensure background streaming runs at steady 3s cadence & populate initial weather on mount
   useEffect(() => {
     let isMounted = true;
 
     const initTelemetry = async () => {
       try {
-        // 1. Fetch live weather & physics baseline
+        // 1. Fetch initial live weather & physics baseline
         const wRes = await apiML.getLiveWeather();
         if (isMounted && wRes?.weather) {
           setLiveWeather(wRes.weather);
@@ -77,16 +74,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
           });
         }
 
-        // 2. Ensure backend background stream is actively running
+        // 2. Ensure backend background stream is actively running at steady 3.0s cadence
         const statusRes = await apiML.getFluctuationStatus().catch(() => null);
         if (!statusRes?.is_streaming) {
-          await apiML.startFluctuationStream(siteId, 2.5).catch(() => {});
-        }
-
-        // 3. Immediately trigger a fluctuation step so live data is visible instantly
-        const stepRes = await apiML.stepFluctuation(siteId).catch(() => null);
-        if (isMounted && stepRes?.fluctuation) {
-          setLocalFluctuation(stepRes.fluctuation);
+          await apiML.startFluctuationStream(siteId, 3.0).catch(() => {});
         }
       } catch {
         // Graceful fallback
@@ -95,43 +86,26 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
 
     initTelemetry();
 
-    // Fallback heartbeat ticker every 2.5s ensuring continuous live fluctuations
-    fallbackIntervalRef.current = window.setInterval(async () => {
-      try {
-        const data = await apiML.stepFluctuation(siteId);
-        if (isMounted && data?.fluctuation) {
-          setLocalFluctuation(data.fluctuation);
-        }
-        if (onRefreshState) await onRefreshState();
-      } catch {
-        // Ignore transient network errors
-      }
-    }, 2500);
-
     return () => {
       isMounted = false;
-      if (fallbackIntervalRef.current) {
-        window.clearInterval(fallbackIntervalRef.current);
-        fallbackIntervalRef.current = null;
-      }
     };
-  }, [siteId, onRefreshState]);
+  }, [siteId]);
 
-  // Base fallback fluctuation object so telemetry cards are always displayed
+  // Base fallback fluctuation object so telemetry cards are always displayed immediately
   const defaultFluct: MLFluctuationData['fluctuation'] = {
     step: 1,
-    solar_kw: currentRenewableKw > 0 ? Math.round(currentRenewableKw * 0.94 * 10) / 10 : 174.0,
-    solar_delta_kw: -1.2,
-    wind_kw: currentRenewableKw > 0 ? Math.round(currentRenewableKw * 0.06 * 10) / 10 : 1.8,
+    solar_kw: currentRenewableKw > 0 ? Math.round(currentRenewableKw * 0.94 * 10) / 10 : 186.2,
+    solar_delta_kw: -0.8,
+    wind_kw: currentRenewableKw > 0 ? Math.round(currentRenewableKw * 0.06 * 10) / 10 : 1.4,
     wind_delta_kw: 0.1,
     demand_kw: currentDemandKw > 0 ? currentDemandKw : 142.5,
     demand_delta_kw: 0.4,
-    generation_kw: currentRenewableKw > 0 ? currentRenewableKw : 175.8,
-    generation_delta_kw: -1.1,
-    battery_kw: -33.3,
+    generation_kw: currentRenewableKw > 0 ? currentRenewableKw : 187.6,
+    generation_delta_kw: -0.7,
+    battery_kw: -45.1,
     grid_kw: 0.0,
-    voltage_v: 414.8,
-    frequency_hz: 50.01,
+    voltage_v: 415.1,
+    frequency_hz: 50.00,
     event_description: 'Continuous atmospheric irradiance & aerodynamic wind physics synchronization active.',
   };
 
@@ -154,18 +128,18 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
         <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
           <span className="flex items-center gap-1 text-amber-300">
             <Sun className="h-3 w-3" />
-            <span>GHI: <strong className="text-white">{liveWeather?.ghi_wm2 !== undefined ? liveWeather.ghi_wm2.toFixed(1) : '873.0'} W/m²</strong></span>
+            <span>GHI: <strong className="text-white transition-all duration-700">{liveWeather?.ghi_wm2 !== undefined ? liveWeather.ghi_wm2.toFixed(1) : '862.7'} W/m²</strong></span>
           </span>
           <span className="flex items-center gap-1 text-cyan-300">
             <Wind className="h-3 w-3" />
-            <span>Wind: <strong className="text-white">{liveWeather?.wind_speed_mps !== undefined ? liveWeather.wind_speed_mps.toFixed(1) : '2.1'} m/s</strong></span>
+            <span>Wind: <strong className="text-white transition-all duration-700">{liveWeather?.wind_speed_mps !== undefined ? liveWeather.wind_speed_mps.toFixed(1) : '2.4'} m/s</strong></span>
           </span>
           <span className="flex items-center gap-1 text-rose-300">
-            <span>Temp: <strong className="text-white">{liveWeather?.temp_c !== undefined ? liveWeather.temp_c.toFixed(1) : '33.7'} °C</strong></span>
+            <span>Temp: <strong className="text-white transition-all duration-700">{liveWeather?.temp_c !== undefined ? liveWeather.temp_c.toFixed(1) : '34.1'} °C</strong></span>
           </span>
           <span className="flex items-center gap-1 text-purple-300">
             <Zap className="h-3 w-3" />
-            <span>Physics: <strong className="text-white">{physicsBaseline?.total_kw !== undefined ? physicsBaseline.total_kw.toFixed(1) : '192.5'} kW</strong></span>
+            <span>Physics: <strong className="text-white transition-all duration-700">{physicsBaseline?.total_kw !== undefined ? physicsBaseline.total_kw.toFixed(1) : '190.7'} kW</strong></span>
           </span>
           <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/30">
             {liveWeather?.source || 'Open-Meteo Real-Time NWP API'}
@@ -204,7 +178,7 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
             <span className="font-bold">Autonomous Inference Engine</span>
-            <span className="text-[10px] text-emerald-400/80 font-mono border-l border-emerald-500/30 pl-2">2.5s Sync</span>
+            <span className="text-[10px] text-emerald-400/80 font-mono border-l border-emerald-500/30 pl-2">3.0s Cadence</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] font-mono text-slate-300">
@@ -223,14 +197,14 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
             <span className="font-semibold text-emerald-300">Live Telemetry Event:</span>
-            <span className="text-slate-200 font-mono text-[11px]">
+            <span className="text-slate-200 font-mono text-[11px] transition-all duration-700">
               {activeFluct.event_description || 'Stochastic micro-fluctuation within LightGBM P10-P90 envelope'}
             </span>
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono">
-            <span>Bus: <span className="text-emerald-400 font-bold">{activeFluct.voltage_v || 415.0} V</span></span>
-            <span>Freq: <span className="text-emerald-400 font-bold">{activeFluct.frequency_hz || 50.0} Hz</span></span>
+            <span>Bus: <span className="text-emerald-400 font-bold transition-all duration-700">{activeFluct.voltage_v || 415.0} V</span></span>
+            <span>Freq: <span className="text-emerald-400 font-bold transition-all duration-700">{activeFluct.frequency_hz || 50.0} Hz</span></span>
             <span>Step #{activeFluct.step || 1}</span>
           </div>
         </div>
@@ -242,10 +216,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
               <Sun className="h-3 w-3 text-amber-400" />
               <span>Solar PV</span>
             </div>
-            <div className="text-amber-400 font-bold text-sm">
+            <div className="text-amber-400 font-bold text-sm transition-all duration-700">
               {activeFluct.solar_kw.toFixed(1)} kW
             </div>
-            <div className={`text-[10px] font-semibold ${activeFluct.solar_delta_kw >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <div className={`text-[10px] font-semibold transition-all duration-700 ${activeFluct.solar_delta_kw >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
               {activeFluct.solar_delta_kw >= 0 ? '▲ +' : '▼ '}
               {activeFluct.solar_delta_kw.toFixed(1)} kW
             </div>
@@ -256,10 +230,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
               <Wind className="h-3 w-3 text-sky-400" />
               <span>Perimeter Wind</span>
             </div>
-            <div className="text-sky-400 font-bold text-sm">
+            <div className="text-sky-400 font-bold text-sm transition-all duration-700">
               {activeFluct.wind_kw.toFixed(1)} kW
             </div>
-            <div className={`text-[10px] font-semibold ${activeFluct.wind_delta_kw >= 0 ? 'text-emerald-400' : 'text-sky-400'}`}>
+            <div className={`text-[10px] font-semibold transition-all duration-700 ${activeFluct.wind_delta_kw >= 0 ? 'text-emerald-400' : 'text-sky-400'}`}>
               {activeFluct.wind_delta_kw >= 0 ? '▲ +' : '▼ '}
               {activeFluct.wind_delta_kw.toFixed(1)} kW
             </div>
@@ -270,10 +244,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
               <Zap className="h-3 w-3 text-rose-400" />
               <span>Campus Load</span>
             </div>
-            <div className="text-rose-400 font-bold text-sm">
+            <div className="text-rose-400 font-bold text-sm transition-all duration-700">
               {(activeFluct.demand_kw || 140.0).toFixed(1)} kW
             </div>
-            <div className={`text-[10px] font-semibold ${(activeFluct.demand_delta_kw || 0) <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`text-[10px] font-semibold transition-all duration-700 ${(activeFluct.demand_delta_kw || 0) <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {(activeFluct.demand_delta_kw || 0) >= 0 ? '▲ +' : '▼ '}
               {(activeFluct.demand_delta_kw || 0).toFixed(1)} kW
             </div>
@@ -281,10 +255,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
 
           <div className="rounded-lg bg-slate-900/90 p-2 border border-slate-800/80">
             <div className="text-[10px] text-slate-400 font-sans">Total Generation</div>
-            <div className="text-emerald-400 font-bold text-sm">
+            <div className="text-emerald-400 font-bold text-sm transition-all duration-700">
               {activeFluct.generation_kw.toFixed(1)} kW
             </div>
-            <div className={`text-[10px] font-semibold ${activeFluct.generation_delta_kw >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <div className={`text-[10px] font-semibold transition-all duration-700 ${activeFluct.generation_delta_kw >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
               {activeFluct.generation_delta_kw >= 0 ? '▲ +' : '▼ '}
               {activeFluct.generation_delta_kw.toFixed(1)} kW
             </div>
@@ -292,10 +266,10 @@ export const MLTelemetryController: React.FC<MLTelemetryControllerProps> = ({
 
           <div className="rounded-lg bg-slate-900/90 p-2 border border-slate-800/80">
             <div className="text-[10px] text-slate-400 font-sans">BESS Compensation</div>
-            <div className="text-purple-400 font-bold text-sm">
+            <div className="text-purple-400 font-bold text-sm transition-all duration-700">
               {(activeFluct.battery_kw || 0).toFixed(1)} kW
             </div>
-            <div className="text-[10px] text-emerald-400 font-semibold">
+            <div className="text-[10px] text-emerald-400 font-semibold transition-all duration-700">
               Grid: {Math.abs(activeFluct.grid_kw || 0).toFixed(1)} kW
             </div>
           </div>

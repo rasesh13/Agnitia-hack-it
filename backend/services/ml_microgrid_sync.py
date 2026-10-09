@@ -615,8 +615,8 @@ class MLMicrogridSyncService:
         campus_agg = store.compute_campus_aggregates(site_id=site_id, asset_states=raw_states, captured_at=now)
         await session.commit()
 
-        # Run periodic optimizer decision cycle so decisions and timeline update live
-        if self._step_counter % 4 == 0:
+        # Run periodic optimizer decision cycle so decisions and timeline update live (~24s)
+        if self._step_counter % 8 == 0:
             try:
                 dec_mgr = DecisionManager(session=session)
                 cycle_result = await dec_mgr.run_decision_cycle(site_id=site_id)
@@ -765,7 +765,7 @@ class MLMicrogridSyncService:
     def start_background_streaming(
         self,
         session_factory: async_sessionmaker[AsyncSession],
-        interval_seconds: float = 2.0,
+        interval_seconds: float = 3.0,
         site_id: int = 1,
         region_id: str = "central_india_mp_indore",
     ) -> Dict[str, Any]:

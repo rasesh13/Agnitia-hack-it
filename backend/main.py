@@ -51,10 +51,10 @@ async def lifespan(app: FastAPI):
     set_global_scheduler(scheduler)
     scheduler.start()
 
-    # Start continuous real-time weather & ML model streaming (2.5s cadence, no demo values)
+    # Start continuous real-time weather & ML model streaming (3.0s cadence, no demo values)
     ml_sync_service.start_background_streaming(
         session_factory=session_factory,
-        interval_seconds=2.5,
+        interval_seconds=3.0,
         site_id=1,
         region_id="central_india_mp_indore",
     )

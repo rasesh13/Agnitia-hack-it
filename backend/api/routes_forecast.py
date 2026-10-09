@@ -163,7 +163,7 @@ async def step_live_fluctuation(
 
 @router.post("/fluctuate-stream/start")
 async def start_fluctuation_stream(
-    interval_seconds: float = 2.0,
+    interval_seconds: float = 3.0,
     region_id: str = "central_india_mp_indore",
 ):
     """Starts the background continuous streaming task pulsing live ML fluctuations every interval_seconds."""
