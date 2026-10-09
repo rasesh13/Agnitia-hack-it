@@ -24,6 +24,78 @@ import { apiML } from '../services/api';
 const formatMetric = (value?: number | null) =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 });
 
+const SVG_W = 760;
+const SVG_H = 220;
+const PAD = { top: 18, right: 24, bottom: 26, left: 48 };
+const plotW = SVG_W - PAD.left - PAD.right;
+const plotH = SVG_H - PAD.top - PAD.bottom;
+
+const clampY = (y: number, maxBottom: number) => Math.min(y, maxBottom);
+
+const buildSmoothPath = (points: { x: number; y: number }[], maxBottom: number): string => {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  if (points.length === 2) {
+    return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} L ${points[1].x.toFixed(1)} ${points[1].y.toFixed(1)}`;
+  }
+
+  let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  const tension = 0.18;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = i > 0 ? points[i - 1] : points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i < points.length - 2 ? points[i + 2] : p2;
+
+    let cp1x = p1.x + (p2.x - p0.x) * tension;
+    let cp1y = clampY(p1.y + (p2.y - p0.y) * tension, maxBottom);
+    let cp2x = p2.x - (p3.x - p1.x) * tension;
+    let cp2y = clampY(p2.y - (p3.y - p1.y) * tension, maxBottom);
+
+    if (Math.abs(p1.y - maxBottom) < 0.1 && Math.abs(p2.y - maxBottom) < 0.1) {
+      cp1y = maxBottom;
+      cp2y = maxBottom;
+    }
+
+    d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+};
+
+const buildSmoothBandPath = (
+  upper: { x: number; y: number }[],
+  lower: { x: number; y: number }[],
+  maxBottom: number
+): string => {
+  if (upper.length < 2 || lower.length < 2) return '';
+  const upperD = buildSmoothPath(upper, maxBottom);
+  const revLower = lower.slice().reverse();
+  const tension = 0.18;
+
+  let lowerD = ` L ${revLower[0].x.toFixed(1)} ${revLower[0].y.toFixed(1)}`;
+  for (let i = 0; i < revLower.length - 1; i++) {
+    const p0 = i > 0 ? revLower[i - 1] : revLower[i];
+    const p1 = revLower[i];
+    const p2 = revLower[i + 1];
+    const p3 = i < revLower.length - 2 ? revLower[i + 2] : p2;
+
+    let cp1x = p1.x + (p2.x - p0.x) * tension;
+    let cp1y = clampY(p1.y + (p2.y - p0.y) * tension, maxBottom);
+    let cp2x = p2.x - (p3.x - p1.x) * tension;
+    let cp2y = clampY(p2.y - (p3.y - p1.y) * tension, maxBottom);
+
+    if (Math.abs(p1.y - maxBottom) < 0.1 && Math.abs(p2.y - maxBottom) < 0.1) {
+      cp1y = maxBottom;
+      cp2y = maxBottom;
+    }
+
+    lowerD += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+
+  return `${upperD} ${lowerD} Z`;
+};
+
 interface MetricDetail {
   MAE: number;
   RMSE: number;
@@ -119,6 +191,7 @@ export const Forecast: React.FC = () => {
   const [showBaseline, setShowBaseline] = useState<boolean>(true);
   const [showActual, setShowActual] = useState<boolean>(true);
   const [showHourlyTable, setShowHourlyTable] = useState<boolean>(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Fallback synthetic generator for offline sandbox testing
   const generateFallbackForecast = (regionId: string): ForecastPayload => {
@@ -338,6 +411,56 @@ export const Forecast: React.FC = () => {
 
   // Max value for SVG chart scaling
   const maxVal = Math.max(...series.map((p) => Math.max(p.p90_upper, p.baseline, p.actual || 0)), 1);
+
+  const getX = (index: number) => {
+    if (series.length <= 1) return PAD.left;
+    return PAD.left + (index / (series.length - 1)) * plotW;
+  };
+
+  const getY = (val: number) => {
+    const clamped = Math.max(0, Math.min(val, maxVal));
+    return PAD.top + plotH - (clamped / maxVal) * plotH;
+  };
+
+  const actualPoints = series.map((p, i) => ({
+    x: getX(i),
+    y: getY(p.actual ?? p.p50_prediction),
+  }));
+
+  const p50Points = series.map((p, i) => ({
+    x: getX(i),
+    y: getY(p.p50_prediction),
+  }));
+
+  const baselinePoints = series.map((p, i) => ({
+    x: getX(i),
+    y: getY(p.baseline),
+  }));
+
+  const p90Points = series.map((p, i) => ({
+    x: getX(i),
+    y: getY(p.p90_upper),
+  }));
+
+  const p10Points = series.map((p, i) => ({
+    x: getX(i),
+    y: getY(p.p10_lower),
+  }));
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!series || series.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const svgX = (mouseX / rect.width) * SVG_W;
+    if (svgX < PAD.left || svgX > SVG_W - PAD.right) {
+      setHoveredIndex(null);
+      return;
+    }
+    const ratio = (svgX - PAD.left) / plotW;
+    const idx = Math.round(ratio * (series.length - 1));
+    const clamped = Math.max(0, Math.min(idx, series.length - 1));
+    setHoveredIndex(clamped);
+  };
 
   return (
     <div className="space-y-6">
@@ -764,195 +887,352 @@ export const Forecast: React.FC = () => {
       </div>
 
       {/* 8. Uncertainty Band Chart (SVG Multi-Series Rendering) */}
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-white">
-              Hourly Actual vs. Predicted Generation with Uncertainty Bounds ({horizonHours} Hours)
-            </h3>
-            <p className="text-xs text-slate-400">
-              Shaded ribbon denotes the 80% empirical confidence interval [P10 lower bound to P90 upper bound].
-            </p>
+      <div className="max-w-4xl mx-auto w-full">
+        <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl backdrop-blur-md">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-white">
+                Hourly Actual vs. Predicted Generation with Uncertainty Bounds ({horizonHours} Hours)
+              </h3>
+              <p className="text-xs text-slate-400">
+                Shaded ribbon denotes the 80% empirical confidence interval [P10 lower bound to P90 upper bound].
+              </p>
+            </div>
+
+            {/* Interactive Legend */}
+            <div className="flex flex-wrap items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="h-0.5 w-3 bg-red-500 border-b border-dashed border-red-400" />
+                <span className="text-red-400 font-mono font-medium">Pre-ML Zero (0 kW)</span>
+              </div>
+              {showActual && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="text-emerald-300 font-medium">Actual / Sensor</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                <span className="text-amber-300 font-medium">ML Forecast (P50)</span>
+              </div>
+              {showBaseline && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-0.5 w-3 bg-slate-400 border-b border-dashed border-slate-400" />
+                  <span className="text-slate-400">Physics Baseline</span>
+                </div>
+              )}
+              {showUncertaintyBand && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-4 rounded bg-amber-500/20 border border-amber-500/40" />
+                  <span className="text-slate-400">[P10 - P90] Band</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Interactive Legend */}
-          <div className="flex flex-wrap items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="h-0.5 w-3 bg-red-500 border-b border-dashed border-red-400" />
-              <span className="text-red-400 font-mono font-medium">Pre-ML Zero Baseline (0.0 kW)</span>
+          {/* Interactive Inspection Readout Header */}
+          {hoveredIndex !== null && series[hoveredIndex] ? (
+            <div className="mb-3 flex flex-wrap items-center justify-between rounded-xl border border-sky-500/30 bg-sky-950/40 px-3.5 py-2 text-xs transition-all">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+                <span className="font-mono font-bold text-white">
+                  {istTime(series[hoveredIndex].timestamp)} IST (T+{hoveredIndex}h)
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-emerald-400 font-mono font-semibold">
+                  Actual: {(series[hoveredIndex].actual ?? series[hoveredIndex].p50_prediction).toFixed(1)} {unit}
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-amber-400 font-mono font-semibold">
+                  ML P50: {series[hoveredIndex].p50_prediction.toFixed(1)} {unit}
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-slate-400 font-mono">
+                  Base: {series[hoveredIndex].baseline.toFixed(1)} {unit}
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-amber-300/90 font-mono text-[11px]">
+                  Envelope: [{series[hoveredIndex].p10_lower.toFixed(1)} – {series[hoveredIndex].p90_upper.toFixed(1)}] {unit}
+                </span>
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                Variance: {((series[hoveredIndex].actual ?? series[hoveredIndex].p50_prediction) - series[hoveredIndex].p50_prediction).toFixed(1)} {unit}
+              </div>
             </div>
-            {showActual && (
-              <div className="flex items-center gap-1.5">
-                <span className="h-1 w-5 rounded-full bg-emerald-400" />
-                <span className="text-emerald-300 font-medium">Actual / Ground Truth</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5">
-              <span className="w-5 border-t-2 border-dashed border-amber-400" />
-              <span className="text-slate-200">ML Forecast (P50)</span>
-            </div>
-            {showBaseline && (
-              <div className="flex items-center gap-1.5">
-                <span className="h-0.5 w-3 bg-slate-400 border-b border-dashed border-slate-400" />
-                <span className="text-slate-400">Physics Baseline</span>
-              </div>
-            )}
-            {showUncertaintyBand && (
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-4 rounded bg-amber-500/20 border border-amber-500/40" />
-                <span className="text-slate-400">[P10 - P90] Band</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Visual Chart */}
-        <div className="relative h-72 w-full pt-4">
-          {!hasSeries && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-center">
-              <LineChartIcon className="h-8 w-8 text-slate-600" />
-              <span className="text-sm font-semibold text-slate-300">No forecast data to plot yet</span>
-              <span className="max-w-sm text-xs text-slate-500">The {horizonHours}-hour curves will appear here once the forecast models are loaded.</span>
+          ) : (
+            <div className="mb-3 flex items-center justify-between text-[11px] text-slate-500 px-1">
+              <span>Hover across the chart to inspect hourly generation & confidence envelope</span>
+              <span className="font-mono">Peak Horizon Scale: {maxVal.toFixed(1)} {unit}</span>
             </div>
           )}
-          <svg className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox={`0 0 ${Math.max(series.length - 1, 1)} 100`}>
-            {/* Grid Lines */}
-            {[25, 50, 75].map((y) => (
-              <line key={y} x1="0" y1={y} x2={series.length - 1} y2={y} stroke="rgba(11,18,32,0.1)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
-            ))}
 
-            {/* Zero Baseline Line at y=0 kW (bottom of chart) */}
-            <line x1="0" y1="99.5" x2={series.length - 1} y2="99.5" stroke="#dc2626" strokeWidth="1.5" strokeDasharray="6 4" vectorEffect="non-scaling-stroke" />
-
-            {/* Uncertainty Area (P10 to P90) */}
-            {showUncertaintyBand && hasSeries && series.length > 1 && (
-              <polygon
-                points={
-                  series
-                    .map((p, i) => `${i},${100 - (p.p90_upper / maxVal) * 100}`)
-                    .join(' ') +
-                  ' ' +
-                  series
-                    .slice()
-                    .reverse()
-                    .map((p, i) => `${series.length - 1 - i},${100 - (p.p10_lower / maxVal) * 100}`)
-                    .join(' ')
-                }
-                fill="rgba(217, 119, 6, 0.16)"
-              />
+          {/* Visual Chart SVG */}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/70 p-3 pt-4">
+            {!hasSeries && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-center bg-slate-950/90">
+                <LineChartIcon className="h-8 w-8 text-slate-600" />
+                <span className="text-sm font-semibold text-slate-300">No forecast data to plot yet</span>
+                <span className="max-w-sm text-xs text-slate-500">The {horizonHours}-hour curves will appear here once the forecast models are loaded.</span>
+              </div>
             )}
+            <svg
+              className="w-full h-64 sm:h-72 select-none cursor-crosshair overflow-visible"
+              viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <defs>
+                <linearGradient id="uncertaintyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.03" />
+                </linearGradient>
+                <linearGradient id="mlForecastGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#fbbf24" />
+                </linearGradient>
+              </defs>
 
-            {/* Physics Baseline Path */}
-            {showBaseline && hasSeries && series.length > 1 && (
-              <polyline
-                fill="none"
-                stroke="#9a8c77"
-                strokeWidth="1.5"
-                strokeDasharray="5 4"
-                vectorEffect="non-scaling-stroke"
-                points={series.map((p, i) => `${i},${100 - (p.baseline / maxVal) * 100}`).join(' ')}
+              {/* Horizontal Gridlines & Y-axis Labels */}
+              {[1.0, 0.75, 0.5, 0.25, 0.0].map((frac) => {
+                const yPos = PAD.top + (1 - frac) * plotH;
+                const val = Math.round(frac * maxVal);
+                return (
+                  <g key={frac}>
+                    <line
+                      x1={PAD.left}
+                      y1={yPos}
+                      x2={SVG_W - PAD.right}
+                      y2={yPos}
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeDasharray="3 3"
+                    />
+                    <text
+                      x={PAD.left - 8}
+                      y={yPos + 3.5}
+                      textAnchor="end"
+                      fill="#64748b"
+                      fontSize="10"
+                      fontFamily="monospace"
+                    >
+                      {val}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Zero Baseline (Red dashed line at bottom) */}
+              <line
+                x1={PAD.left}
+                y1={PAD.top + plotH}
+                x2={SVG_W - PAD.right}
+                y2={PAD.top + plotH}
+                stroke="#ef4444"
+                strokeWidth="1.2"
+                strokeDasharray="4 4"
               />
-            )}
+              <text
+                x={SVG_W - PAD.right}
+                y={PAD.top + plotH - 5}
+                textAnchor="end"
+                fill="#ef4444"
+                fontSize="9"
+                fontFamily="monospace"
+                opacity="0.85"
+              >
+                0 kW Baseline
+              </text>
 
-            {/* Actual / Ground Truth Path (solid, underneath the forecast) */}
-            {showActual && hasSeries && series.length > 1 && series.some((p) => p.actual != null) && (
-              <polyline
-                fill="none"
-                stroke="#059669"
-                strokeWidth="3.5"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
-                points={series
-                  .map((p, i) => (p.actual != null ? `${i},${100 - (p.actual / maxVal) * 100}` : null))
-                  .filter(Boolean)
-                  .join(' ')}
-              />
-            )}
+              {/* X-axis Ticks & Timestamps */}
+              {[
+                0,
+                Math.floor(series.length / 4),
+                Math.floor(series.length / 2),
+                Math.floor((3 * series.length) / 4),
+                series.length - 1,
+              ].map((idx) => {
+                const pt = series[idx];
+                if (!pt) return null;
+                const xPos = getX(idx);
+                const timeStr = istTime(pt.timestamp);
+                return (
+                  <g key={idx}>
+                    <line
+                      x1={xPos}
+                      y1={PAD.top + plotH}
+                      x2={xPos}
+                      y2={PAD.top + plotH + 4}
+                      stroke="rgba(255,255,255,0.2)"
+                    />
+                    <text
+                      x={xPos}
+                      y={SVG_H - 8}
+                      textAnchor={idx === 0 ? 'start' : idx === series.length - 1 ? 'end' : 'middle'}
+                      fill="#64748b"
+                      fontSize="10"
+                      fontFamily="monospace"
+                    >
+                      {timeStr} (T+{idx}h)
+                    </text>
+                  </g>
+                );
+              })}
 
-            {/* ML P50 Path (dashed, on top) */}
-            {hasSeries && series.length > 1 && (
-              <polyline
-                fill="none"
-                stroke="#d97706"
-                strokeWidth="2.5"
-                strokeDasharray="7 5"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-                points={series.map((p, i) => `${i},${100 - (p.p50_prediction / maxVal) * 100}`).join(' ')}
-              />
-            )}
-          </svg>
-        </div>
+              {/* Uncertainty Area (P10 to P90) - Smooth Bézier Ribbon */}
+              {showUncertaintyBand && hasSeries && series.length > 1 && (
+                <path
+                  d={buildSmoothBandPath(p90Points, p10Points, PAD.top + plotH)}
+                  fill="url(#uncertaintyGradient)"
+                  stroke="rgba(245, 158, 11, 0.3)"
+                  strokeWidth="0.75"
+                />
+              )}
 
-        {/* X-axis Timeline */}
-        <div className="mt-3 flex justify-between text-[11px] text-slate-500 font-mono border-t border-slate-800/60 pt-2">
-          <span>{series[0] ? istTime(series[0].timestamp) : 'T+0'} (Now)</span>
-          <span>{series[Math.floor(series.length / 4)] ? istTime(series[Math.floor(series.length / 4)].timestamp) : `T+${Math.floor(horizonHours / 4)}h`}</span>
-          <span>{series[Math.floor(series.length / 2)] ? istTime(series[Math.floor(series.length / 2)].timestamp) : `T+${Math.floor(horizonHours / 2)}h`}</span>
-          <span>{series[Math.floor((3 * series.length) / 4)] ? istTime(series[Math.floor((3 * series.length) / 4)].timestamp) : `T+${Math.floor((3 * horizonHours) / 4)}h`}</span>
-          <span>{series[series.length - 1] ? istTime(series[series.length - 1].timestamp) : `T+${horizonHours}h`}</span>
-        </div>
+              {/* Physics Baseline Path - Sleek dashed line */}
+              {showBaseline && hasSeries && series.length > 1 && (
+                <path
+                  d={buildSmoothPath(baselinePoints, PAD.top + plotH)}
+                  fill="none"
+                  stroke="#94a3b8"
+                  strokeWidth="1.25"
+                  strokeDasharray="4 4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
 
-        {/* Toggle Hourly Table Button */}
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={() => setShowHourlyTable(!showHourlyTable)}
-            className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors"
-          >
-            <span>{showHourlyTable ? 'Hide Detailed Hourly Schedule' : 'View Detailed Hourly Breakdown Table'}</span>
-            {showHourlyTable ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-        </div>
+              {/* ML P50 Path - Smooth vibrant Amber Curve */}
+              {hasSeries && series.length > 1 && (
+                <path
+                  d={buildSmoothPath(p50Points, PAD.top + plotH)}
+                  fill="none"
+                  stroke="url(#mlForecastGradient)"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
 
-        {/* Expandable Hourly Schedule Table */}
-        {showHourlyTable && (
-          <div className="mt-4 overflow-x-auto border-t border-slate-800 pt-4">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                  <th className="pb-2">Time (IST)</th>
-                  <th className="pb-2 text-right">Actual (kW)</th>
-                  <th className="pb-2 text-right">Baseline (kW)</th>
-                  <th className="pb-2 text-right text-amber-400">ML Forecast P50</th>
-                  <th className="pb-2 text-right">P10 Lower</th>
-                  <th className="pb-2 text-right">P90 Upper</th>
-                  <th className="pb-2 text-right">Variance</th>
-                  <th className="pb-2 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/40 font-mono text-slate-300">
-                {series.map((pt, idx) => {
-                  const act = pt.actual ?? pt.p50_prediction;
-                  const v = Math.round((act - pt.p50_prediction) * 10) / 10;
-                  const inBand = act >= pt.p10_lower && act <= pt.p90_upper;
-                  return (
-                    <tr key={idx} className="hover:bg-slate-800/30">
-                      <td className="py-1.5 text-slate-400">{istTime(pt.timestamp)} (T+{idx}h)</td>
-                      <td className="py-1.5 text-right font-bold text-emerald-400">{act.toFixed(1)}</td>
-                      <td className="py-1.5 text-right text-slate-400">{pt.baseline.toFixed(1)}</td>
-                      <td className="py-1.5 text-right font-bold text-amber-300">{pt.p50_prediction.toFixed(1)}</td>
-                      <td className="py-1.5 text-right text-slate-400">{pt.p10_lower.toFixed(1)}</td>
-                      <td className="py-1.5 text-right text-slate-400">{pt.p90_upper.toFixed(1)}</td>
-                      <td className={`py-1.5 text-right font-bold ${Math.abs(v) < 10 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {v > 0 ? `+${v}` : v}
-                      </td>
-                      <td className="py-1.5 text-center">
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-sans ${
-                            inBand ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
-                          }`}
-                        >
-                          {inBand ? 'In Envelope' : 'Deviation'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              {/* Actual / Ground Truth Path - Sharp Emerald Curve */}
+              {showActual && hasSeries && series.length > 1 && (
+                <path
+                  d={buildSmoothPath(actualPoints, PAD.top + plotH)}
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+
+              {/* Interactive Hover Crosshair & Points */}
+              {hoveredIndex !== null && series[hoveredIndex] && (
+                <g>
+                  <line
+                    x1={getX(hoveredIndex)}
+                    y1={PAD.top}
+                    x2={getX(hoveredIndex)}
+                    y2={PAD.top + plotH}
+                    stroke="#38bdf8"
+                    strokeWidth="1"
+                    strokeDasharray="2 2"
+                    opacity="0.85"
+                  />
+                  {/* ML P50 Point */}
+                  <circle
+                    cx={getX(hoveredIndex)}
+                    cy={getY(series[hoveredIndex].p50_prediction)}
+                    r="4"
+                    fill="#f59e0b"
+                    stroke="#0f172a"
+                    strokeWidth="2"
+                  />
+                  {/* Actual Point */}
+                  {showActual && (
+                    <circle
+                      cx={getX(hoveredIndex)}
+                      cy={getY(series[hoveredIndex].actual ?? series[hoveredIndex].p50_prediction)}
+                      r="4"
+                      fill="#10b981"
+                      stroke="#0f172a"
+                      strokeWidth="2"
+                    />
+                  )}
+                  {/* Baseline Point */}
+                  {showBaseline && (
+                    <circle
+                      cx={getX(hoveredIndex)}
+                      cy={getY(series[hoveredIndex].baseline)}
+                      r="3"
+                      fill="#94a3b8"
+                      stroke="#0f172a"
+                      strokeWidth="1.5"
+                    />
+                  )}
+                </g>
+              )}
+            </svg>
           </div>
-        )}
+
+          {/* Toggle Hourly Table Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => setShowHourlyTable(!showHourlyTable)}
+              className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors"
+            >
+              <span>{showHourlyTable ? 'Hide Detailed Hourly Schedule' : 'View Detailed Hourly Breakdown Table'}</span>
+              {showHourlyTable ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          </div>
+
+          {/* Expandable Hourly Schedule Table */}
+          {showHourlyTable && (
+            <div className="mt-4 overflow-x-auto border-t border-slate-800 pt-4">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                    <th className="pb-2">Time (IST)</th>
+                    <th className="pb-2 text-right">Actual (kW)</th>
+                    <th className="pb-2 text-right">Baseline (kW)</th>
+                    <th className="pb-2 text-right text-amber-400">ML Forecast P50</th>
+                    <th className="pb-2 text-right">P10 Lower</th>
+                    <th className="pb-2 text-right">P90 Upper</th>
+                    <th className="pb-2 text-right">Variance</th>
+                    <th className="pb-2 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40 font-mono text-slate-300">
+                  {series.map((pt, idx) => {
+                    const act = pt.actual ?? pt.p50_prediction;
+                    const v = Math.round((act - pt.p50_prediction) * 10) / 10;
+                    const inBand = act >= pt.p10_lower && act <= pt.p90_upper;
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/30">
+                        <td className="py-1.5 text-slate-400">{istTime(pt.timestamp)} (T+{idx}h)</td>
+                        <td className="py-1.5 text-right font-bold text-emerald-400">{act.toFixed(1)}</td>
+                        <td className="py-1.5 text-right text-slate-400">{pt.baseline.toFixed(1)}</td>
+                        <td className="py-1.5 text-right font-bold text-amber-300">{pt.p50_prediction.toFixed(1)}</td>
+                        <td className="py-1.5 text-right text-slate-400">{pt.p10_lower.toFixed(1)}</td>
+                        <td className="py-1.5 text-right text-slate-400">{pt.p90_upper.toFixed(1)}</td>
+                        <td className={`py-1.5 text-right font-bold ${Math.abs(v) < 10 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {v > 0 ? `+${v}` : v}
+                        </td>
+                        <td className="py-1.5 text-center">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-sans ${
+                              inBand ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                            }`}
+                          >
+                            {inBand ? 'In Envelope' : 'Deviation'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 9. Simple Alerts for Expected Low or High Generation */}
