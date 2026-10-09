@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, X } from 'lucide-react';
 import { SuryaMark } from '@/components/SuryaMark';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
@@ -16,6 +16,14 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleGoBack = () => {
+    if (onNavigateLanding) {
+      onNavigateLanding();
+    } else {
+      window.history.back();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +45,18 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 text-slate-100 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative w-full max-w-md space-y-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl">
+        {/* Top-Right Red Cross Back Button */}
+        <button
+          type="button"
+          onClick={handleGoBack}
+          aria-label="Go back"
+          title="Go back"
+          className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:border-red-500/50 hover:bg-red-500/20 hover:text-red-300 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/40"
+        >
+          <X className="h-4 w-4" strokeWidth={2.5} />
+        </button>
+
         {/* Header Branding */}
         <div className="text-center">
           <SuryaMark size={60} className="mx-auto drop-shadow-[0_0_24px_rgba(245,158,11,0.4)]" />
@@ -115,30 +134,8 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
                 <span>Authenticating...</span>
               </>
             ) : (
-              <span>Sign In to Mission Control</span>
+              <span>Sign In to Console</span>
             )}
-          </button>
-
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={async () => {
-              setEmail('admin@prestige.edu.in');
-              setPassword('SuryaAdmin2026!');
-              clearError();
-              setIsSubmitting(true);
-              try {
-                await login('admin@prestige.edu.in', 'SuryaAdmin2026!');
-                if (onSuccess) onSuccess();
-              } catch {
-                // handled in context
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20"
-          >
-            ⚡ 1-Click Demo Login (Prestige University Admin)
           </button>
         </form>
 
@@ -163,26 +160,14 @@ export const Login: React.FC<LoginProps> = ({ onNavigateSignup, onNavigateLandin
         </div>
 
         {/* Footer info */}
-        <div className="pt-2 text-center text-xs text-slate-400 space-y-2">
-          <div>
-            <span>Need an account? </span>
-            <button
-              onClick={onNavigateSignup}
-              className="font-medium text-emerald-400 hover:text-emerald-300 hover:underline"
-            >
-              Create new account
-            </button>
-          </div>
-          {onNavigateLanding && (
-            <div>
-              <button
-                onClick={onNavigateLanding}
-                className="text-slate-400 hover:text-amber-400 transition-colors"
-              >
-                ← Return to SURYA Landing Page
-              </button>
-            </div>
-          )}
+        <div className="pt-2 text-center text-xs text-slate-400">
+          <span>Need an account? </span>
+          <button
+            onClick={onNavigateSignup}
+            className="font-medium text-emerald-400 hover:text-emerald-300 hover:underline"
+          >
+            Create new account
+          </button>
         </div>
       </div>
     </div>
