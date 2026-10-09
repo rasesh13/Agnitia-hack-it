@@ -385,6 +385,29 @@ async def test_settings_routes_permissions_and_updates(
         assert res_policy_put.status_code == 200
         assert res_policy_put.json()["cost_weight"] == 0.8
 
+        # The Settings page saves the weights, closed loop and cycle interval together.
+        original_cycle = res_policy.json()["decision_cycle_seconds"]
+        res_form_save = await client.put(
+            "/api/v1/settings/control-policy",
+            json={"closed_loop_enabled": False, "cost_weight": 0.6, "carbon_weight": 0.4, "decision_cycle_seconds": 30},
+            headers=auth_headers["admin"],
+        )
+        assert res_form_save.status_code == 200
+        assert res_form_save.json()["decision_cycle_seconds"] == 30
+
+        res_bad_cycle = await client.put(
+            "/api/v1/settings/control-policy",
+            json={"decision_cycle_seconds": 1},
+            headers=auth_headers["admin"],
+        )
+        assert res_bad_cycle.status_code == 422
+
+        await client.put(
+            "/api/v1/settings/control-policy",
+            json={"decision_cycle_seconds": original_cycle},
+            headers=auth_headers["admin"],
+        )
+
     # Verify audit events were written in database
     async with test_db() as session:
         from sqlalchemy import select

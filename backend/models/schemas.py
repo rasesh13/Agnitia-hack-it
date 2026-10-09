@@ -351,6 +351,7 @@ class ControlPolicyUpdate(BaseModel):
     emergency_stop_active: Optional[bool] = None
     cost_weight: Optional[float] = None
     carbon_weight: Optional[float] = None
+    decision_cycle_seconds: Optional[int] = Field(None, ge=10, le=3600)
 
 
 class ForceCycleRequest(BaseModel):

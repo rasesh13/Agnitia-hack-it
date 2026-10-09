@@ -547,6 +547,7 @@ async def update_control_policy(
         "emergency_stop_active": scheduler.emergency_stop_active if scheduler else False,
         "cost_weight": settings.COST_WEIGHT,
         "carbon_weight": settings.CARBON_WEIGHT,
+        "decision_cycle_seconds": settings.DECISION_CYCLE_SECONDS,
     }
 
     if payload.closed_loop_enabled is not None and scheduler:
@@ -557,6 +558,8 @@ async def update_control_policy(
         settings.COST_WEIGHT = payload.cost_weight
     if payload.carbon_weight is not None:
         settings.CARBON_WEIGHT = payload.carbon_weight
+    if payload.decision_cycle_seconds is not None:
+        settings.DECISION_CYCLE_SECONDS = payload.decision_cycle_seconds
 
     audit = AuditEvent(
         event_type="SETTINGS_UPDATE",
