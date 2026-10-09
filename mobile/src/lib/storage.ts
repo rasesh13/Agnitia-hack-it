@@ -23,8 +23,17 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
 
 const writeJson = (key: string, value: unknown) => Preferences.set({ key, value: JSON.stringify(value) });
 
+// The old default backend on the operator's PC. Sessions and saved servers that
+// point at it are dropped so the app moves to the hosted backend.
+const LEGACY_SERVER = 'http://172.10.21.55:8010';
+
 export const storage = {
-  loadSession: () => readJson<Session | null>(KEYS.session, null),
+  loadSession: async () => {
+    const session = await readJson<Session | null>(KEYS.session, null);
+    if (session?.serverUrl !== LEGACY_SERVER) return session;
+    await Preferences.remove({ key: KEYS.session });
+    return null;
+  },
   saveSession: (session: Session) => writeJson(KEYS.session, session),
   clearSession: () => Preferences.remove({ key: KEYS.session }),
 
@@ -34,7 +43,10 @@ export const storage = {
   loadAlerts: () => readJson<AlertItem[]>(KEYS.alerts, []),
   saveAlerts: (alerts: AlertItem[]) => writeJson(KEYS.alerts, alerts),
 
-  lastServer: async () => (await Preferences.get({ key: KEYS.lastServer })).value,
+  lastServer: async () => {
+    const { value } = await Preferences.get({ key: KEYS.lastServer });
+    return value === LEGACY_SERVER ? null : value;
+  },
   rememberServer: (url: string) => Preferences.set({ key: KEYS.lastServer, value: url }),
 
   isOnboarded: async () => (await Preferences.get({ key: KEYS.onboarded })).value === '1',
