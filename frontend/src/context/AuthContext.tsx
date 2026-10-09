@@ -12,6 +12,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -107,6 +108,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (idToken: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiAuth.googleAuth(idToken);
+      localStorage.setItem(TOKEN_KEY, response.access_token);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+      setToken(response.access_token);
+      setUser(response.user);
+    } catch (err: unknown) {
+      const msg = err instanceof ApiError ? err.message : 'Google sign-in failed. Please try again.';
+      setError(msg);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const signup = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -141,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         login,
         signup,
+        loginWithGoogle,
         logout,
         clearError,
       }}
